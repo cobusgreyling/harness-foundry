@@ -38,6 +38,9 @@ importers:
       '@cobusgreyling/harness-foundry-evolve':
         specifier: workspace:*
         version: link:../evolve
+      '@cobusgreyling/harness-foundry-host':
+        specifier: workspace:*
+        version: link:../host
       '@cobusgreyling/harness-foundry-runtime':
         specifier: workspace:*
         version: link:../runtime
@@ -132,6 +135,25 @@ importers:
       '@cobusgreyling/harness-foundry-trace':
         specifier: workspace:*
         version: link:../trace
+    devDependencies:
+      '@types/node':
+        specifier: ^26.0.0
+        version: 26.1.1
+      typescript:
+        specifier: ^6.0.3
+        version: 6.0.3
+      vitest:
+        specifier: ^3.2.4
+        version: 3.2.7(@types/node@26.1.1)(yaml@2.9.0)
+
+  packages/host:
+    dependencies:
+      '@cobusgreyling/harness-foundry-core':
+        specifier: workspace:*
+        version: link:../core
+      '@cobusgreyling/harness-foundry-runtime':
+        specifier: workspace:*
+        version: link:../runtime
     devDependencies:
       '@types/node':
         specifier: ^26.0.0

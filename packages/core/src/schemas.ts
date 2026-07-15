@@ -56,6 +56,9 @@ export const TraceEventTypeSchema = z.enum([
   "recovery.triggered",
   "evidence.emitted",
   "stack.resolved",
+  "verification.run",
+  "verification.pass",
+  "verification.fail",
   "error",
 ]);
 

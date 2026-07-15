@@ -23,11 +23,23 @@ foundry evolve proposal --session <id>
 
 ## Implementer preset
 
-For read-write agent loops with recovery:
+For read-write agent loops with git worktrees, test verification, and recovery:
 
 ```bash
 foundry init --from implementer --name my-app
 foundry run --goal "Implement feature X"
+```
+
+The implementer stack creates an isolated git worktree, runs your test command (from `package.json` or `AGENTS.md`), and reverts worktree changes on failure.
+
+## Host adapters (Cursor / Claude Code)
+
+```bash
+foundry host integrate cursor
+foundry run --goal "Implement feature X" --host cursor
+
+foundry init --from implementer --with-claude-code
+foundry host detect
 ```
 
 ## Enable outerloop evidence

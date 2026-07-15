@@ -21,13 +21,18 @@
 - [x] npm publish pipeline + smoke test
 - [x] Docs, CONTRIBUTING, issue templates
 
-## v0.3 (next)
+## v0.3 ✅
+
+- [x] Implementer execution: git worktrees, test verification, recovery
+- [x] Cursor / Claude Code host adapters (`foundry host integrate`)
+- [x] GitHub Action: reusable foundry-gate workflow
+- [x] npm publish (`@cobusgreyling/harness-foundry`)
+
+## v0.4 (next)
 
 - [ ] OpenAI model adapter
 - [ ] Real MCP stdio transport
 - [ ] `foundry evolve apply` (behind human gate)
-- [ ] Cursor / Claude Code host adapters
-- [ ] GitHub Action: reusable foundry-gate workflow
 
 ## Non-goals (v1)
 

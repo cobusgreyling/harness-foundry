@@ -8,11 +8,14 @@ import {
   writeStackLock,
   loadMergedCatalog,
 } from "@cobusgreyling/harness-foundry-compose";
+import { setupClaudeCode, setupCursor } from "@cobusgreyling/harness-foundry-host";
 import { foundryDir, hooksDir, stackPath } from "@cobusgreyling/harness-foundry-core";
 
 export type InitOptions = {
   name?: string;
   from?: StackPreset;
+  withCursor?: boolean;
+  withClaudeCode?: boolean;
 };
 
 export type InitResult = {
@@ -20,6 +23,7 @@ export type InitResult = {
   stackName: string;
   preset: StackPreset;
   filesWritten: string[];
+  integrations: string[];
 };
 
 function defaultStackName(projectRoot: string, override?: string): string {
@@ -31,6 +35,7 @@ export async function initProject(cwd: string, options: InitOptions = {}): Promi
   const stackName = defaultStackName(cwd, options.name);
   const stack = stackFromPreset(preset, stackName);
   const filesWritten: string[] = [];
+  const integrations: string[] = [];
 
   const dirs = [
     foundryDir(cwd),
@@ -74,5 +79,17 @@ export async function initProject(cwd: string, options: InitOptions = {}): Promi
   );
   filesWritten.push(stateFile);
 
-  return { projectRoot: cwd, stackName, preset, filesWritten };
+  if (options.withCursor) {
+    const cursor = await setupCursor(cwd);
+    integrations.push("cursor");
+    filesWritten.push(...cursor.filesWritten);
+  }
+
+  if (options.withClaudeCode) {
+    const claude = await setupClaudeCode(cwd);
+    integrations.push("claude-code");
+    filesWritten.push(...claude.filesWritten);
+  }
+
+  return { projectRoot: cwd, stackName, preset, filesWritten, integrations };
 }

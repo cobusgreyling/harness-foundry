@@ -18,7 +18,13 @@ import {
   generateEvolveProposal,
   generateEvolveReport,
 } from "@cobusgreyling/harness-foundry-evolve";
-import { runSession } from "@cobusgreyling/harness-foundry-runtime";
+import {
+  bridgeHostSession,
+  detectHost,
+  resolveHost,
+  setupClaudeCode,
+  setupCursor,
+} from "@cobusgreyling/harness-foundry-host";
 import { readTraceEvents } from "@cobusgreyling/harness-foundry-trace";
 import { initProject } from "./init-project.js";
 
@@ -27,20 +33,30 @@ const program = new Command();
 program
   .name("foundry")
   .description("Composable harness runtime for production agents")
-  .version("0.2.0");
+  .version("0.4.0");
 
 program
   .command("init")
   .description("Initialize .foundry harness scaffold in the current project")
   .option("--name <name>", "Harness stack name (default: directory name)")
   .option("--from <preset>", "Stack preset: minimal | implementer", "minimal")
-  .action(async (options: { name?: string; from: string }) => {
+  .option("--with-cursor", "Install Cursor rules and post-run hook")
+  .option("--with-claude-code", "Install Claude Code helpers and post-run hook")
+  .action(async (options: { name?: string; from: string; withCursor?: boolean; withClaudeCode?: boolean }) => {
     const preset = options.from === "implementer" ? "implementer" : "minimal";
     const cwd = process.cwd();
-    const result = await initProject(cwd, { name: options.name, from: preset });
+    const result = await initProject(cwd, {
+      name: options.name,
+      from: preset,
+      withCursor: options.withCursor,
+      withClaudeCode: options.withClaudeCode,
+    });
     console.log(chalk.green(`Harness "${result.stackName}" initialized (${result.preset})`));
     for (const file of result.filesWritten) {
       console.log(chalk.dim(`  ${file}`));
+    }
+    if (result.integrations.length > 0) {
+      console.log(chalk.cyan(`Integrations: ${result.integrations.join(", ")}`));
     }
     console.log(chalk.dim("\nNext: foundry validate && foundry run"));
   });
@@ -154,22 +170,70 @@ program
   .description("Run a harness session against the active stack")
   .option("--goal <goal>", "Session goal")
   .option("--turns <n>", "Number of turns", "1")
+  .option("--host <host>", "Host adapter: auto | cursor | claude-code | standalone", "auto")
   .option("--dry-run", "Record session lifecycle without activating primitives")
-  .action(async (options: { goal?: string; turns: string; dryRun?: boolean }) => {
+  .action(async (options: { goal?: string; turns: string; host: string; dryRun?: boolean }) => {
     const cwd = process.cwd();
+    const host = await resolveHost(
+      options.host as "auto" | "cursor" | "claude-code" | "standalone",
+      cwd,
+    );
     try {
-      const result = await runSession({
+      const result = await bridgeHostSession({
         projectRoot: cwd,
         goal: options.goal,
         turns: Number.parseInt(options.turns, 10),
         dryRun: options.dryRun,
+        host,
       });
       console.log(chalk.green("Session complete"));
       console.log(chalk.dim(`  ID: ${result.manifest.id}`));
+      console.log(chalk.dim(`  Host: ${result.host}`));
       console.log(chalk.dim(`  Status: ${result.manifest.status}`));
       console.log(chalk.dim(`  Turns: ${result.manifest.turnCount}`));
       console.log(chalk.dim(`  Trace: ${result.manifest.tracePath}`));
       console.log(chalk.dim("\nNext: foundry trace show --session " + result.manifest.id));
+    } catch (error) {
+      console.error(chalk.red(error instanceof Error ? error.message : String(error)));
+      process.exitCode = 1;
+    }
+  });
+
+const host = program.command("host").description("Host adapters (Cursor, Claude Code)");
+
+host
+  .command("detect")
+  .description("Detect active host environment")
+  .action(async () => {
+    const cwd = process.cwd();
+    const detection = await detectHost(cwd);
+    console.log(chalk.green(`Host: ${detection.host}`));
+    for (const signal of detection.signals) {
+      console.log(chalk.dim(`  • ${signal}`));
+    }
+  });
+
+host
+  .command("integrate")
+  .description("Install host integration files")
+  .argument("<target>", "cursor | claude-code")
+  .action(async (target: string) => {
+    const cwd = process.cwd();
+    try {
+      if (target === "cursor") {
+        const result = await setupCursor(cwd);
+        console.log(chalk.green("Cursor integration installed"));
+        for (const file of result.filesWritten) console.log(chalk.dim(`  ${file}`));
+        return;
+      }
+      if (target === "claude-code") {
+        const result = await setupClaudeCode(cwd);
+        console.log(chalk.green("Claude Code integration installed"));
+        for (const file of result.filesWritten) console.log(chalk.dim(`  ${file}`));
+        return;
+      }
+      console.error(chalk.red(`Unknown host: ${target}. Use cursor or claude-code.`));
+      process.exitCode = 1;
     } catch (error) {
       console.error(chalk.red(error instanceof Error ? error.message : String(error)));
       process.exitCode = 1;

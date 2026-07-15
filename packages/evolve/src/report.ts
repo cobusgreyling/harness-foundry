@@ -24,6 +24,7 @@ export async function generateEvolveReport(
   const events = await readTraceEvents(options.tracePath);
   const errors = events.filter((e) => e.type === "error");
   const recoveries = events.filter((e) => e.type === "recovery.triggered");
+  const verificationFails = events.filter((e) => e.type === "verification.fail");
   const activations = events.filter((e) => e.type === "primitive.activate").length;
 
   const findings: EvolveReport["findings"] = [];
@@ -41,6 +42,15 @@ export async function generateEvolveReport(
       severity: "warn",
       message: `${recoveries.length} recovery event(s) triggered`,
       suggestion: "Review execution-layer sandbox and tool permissions",
+    });
+  }
+
+  if (verificationFails.length > 0) {
+    findings.push({
+      severity: "critical",
+      message: `${verificationFails.length} verification failure(s) in trace`,
+      primitive: "recovery/revert-on-test-fail",
+      suggestion: "Review test command in AGENTS.md or tighten implementer sandbox",
     });
   }
 

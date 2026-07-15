@@ -46,6 +46,8 @@ foundry run --goal "Verify harness wiring"
 foundry sessions list
 foundry trace show --session <id>
 foundry evolve report --session <id>
+foundry host integrate cursor
+foundry run --goal "Implement feature X" --host cursor
 ```
 
 Or clone and run the full demo:

@@ -4,12 +4,20 @@ import { getModelProvider } from "@cobusgreyling/harness-foundry-interface";
 import { McpClient } from "@cobusgreyling/harness-foundry-mcp";
 import type { LayerName, PrimitiveRef } from "@cobusgreyling/harness-foundry-core";
 import type { TraceRecorder } from "@cobusgreyling/harness-foundry-trace";
+import type { SessionRuntime } from "./execution/runtime-state.js";
+import { resolveTestCommand } from "./execution/verify.js";
+import {
+  createSessionWorktree,
+  isGitRepo,
+  verifyWorktreeIsolation,
+} from "./execution/worktree.js";
 
 export type ActivateContext = {
   projectRoot: string;
   sessionId: string;
   goal: string;
   recorder: TraceRecorder;
+  runtime: SessionRuntime;
 };
 
 function layerForPrimitive(id: string): LayerName {
@@ -41,10 +49,11 @@ export async function activatePrimitive(
     if (ref.primitive.startsWith("model/")) {
       const provider = getModelProvider(ref);
       if (!provider) throw new Error(`Unknown model provider: ${ref.primitive}`);
+      const cwd = ctx.runtime.worktreePath ?? ctx.projectRoot;
       const result = await provider.complete({
         goal: ctx.goal,
         messages: [{ role: "user", content: ctx.goal }],
-        config: ref.config,
+        config: { ...ref.config, cwd },
       });
       detail = result.simulated
         ? `${result.content}`
@@ -57,14 +66,45 @@ export async function activatePrimitive(
       } catch {
         detail = "No STATE.md yet";
       }
+    } else if (ref.primitive === "tools/git-worktree-write") {
+      if (!(await isGitRepo(ctx.projectRoot))) {
+        detail = "Not a git repository — skipping worktree (read-only mode)";
+      } else {
+        const worktree = await createSessionWorktree(ctx.projectRoot, ctx.sessionId);
+        if (!worktree) throw new Error("Failed to create session worktree");
+        ctx.runtime.worktreePath = worktree.path;
+        ctx.runtime.worktreeBranch = worktree.branch;
+        detail = `Worktree ${worktree.branch} at ${worktree.path}`;
+      }
+    } else if (ref.primitive === "sandbox/worktree-isolated") {
+      if (ctx.runtime.worktreePath) {
+        const isolation = await verifyWorktreeIsolation(ctx.projectRoot, ctx.runtime.worktreePath);
+        ok = isolation.ok;
+        detail = isolation.detail;
+      } else if (await isGitRepo(ctx.projectRoot)) {
+        const worktree = await createSessionWorktree(ctx.projectRoot, ctx.sessionId);
+        if (!worktree) throw new Error("Failed to create isolated worktree");
+        ctx.runtime.worktreePath = worktree.path;
+        ctx.runtime.worktreeBranch = worktree.branch;
+        const isolation = await verifyWorktreeIsolation(ctx.projectRoot, worktree.path);
+        ok = isolation.ok;
+        detail = isolation.detail;
+      } else {
+        detail = "No git repo — sandbox runs in project root (non-isolated)";
+      }
     } else if (ref.primitive.startsWith("tools/")) {
       const mcp = new McpClient();
       const tools = await mcp.listTools();
       detail = `Tools available: ${tools.map((t) => t.name).join(", ")}`;
     } else if (ref.primitive === "recovery/revert-on-test-fail") {
-      detail = "Recovery armed (revert on test failure)";
+      ctx.runtime.recoveryArmed.add(ref.primitive);
+      ctx.runtime.testCommand ??= (await resolveTestCommand(ctx.projectRoot)) ?? "npm test";
+      detail = `Recovery armed (revert on test failure, command: ${ctx.runtime.testCommand})`;
     } else if (ref.primitive === "recovery/narrow-scope") {
+      ctx.runtime.recoveryArmed.add(ref.primitive);
       detail = "Recovery armed (narrow scope on failure)";
+    } else if (ref.primitive === "control/token-budget-100k") {
+      detail = "Token budget 100k active";
     } else {
       detail = `Primitive ${ref.primitive} ready`;
     }
