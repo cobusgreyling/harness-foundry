@@ -132,6 +132,14 @@ pnpm foundry --help
 
 → [CONTRIBUTING.md](CONTRIBUTING.md) · [ROADMAP.md](ROADMAP.md)
 
+## Contributors
+
+| Name | GitHub | Role |
+|------|--------|------|
+| Cobus Greyling | [@cobusgreyling](https://github.com/cobusgreyling) | Creator & maintainer |
+
+→ [CONTRIBUTORS.md](CONTRIBUTORS.md) · [contributors graph](https://github.com/cobusgreyling/harness-foundry/graphs/contributors)
+
 ## License
 
 MIT — see [LICENSE](LICENSE).

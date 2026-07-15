@@ -20,6 +20,7 @@ Or use the Dev Container (`.devcontainer/`).
 3. Add tests for behaviour changes
 4. `pnpm build && pnpm test && pnpm lint`
 5. Open a PR with a clear description
+6. After merge, you will be added to [CONTRIBUTORS.md](./CONTRIBUTORS.md) (`pnpm contributors:update`)
 
 ## Adding a primitive
 
