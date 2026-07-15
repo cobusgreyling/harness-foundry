@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/cobusgreyling/harness-foundry/main/docs/harness-foundry.svg" alt="harness-foundry" width="900" />
+  <img src="https://raw.githubusercontent.com/cobusgreyling/harness-foundry/main/docs/harness-foundry.jpg" alt="harness-foundry" />
 </p>
 
 # harness-foundry
