@@ -43,6 +43,20 @@ npm view @cobusgreyling/harness-foundry version
 npx @cobusgreyling/harness-foundry init --help
 ```
 
+## Troubleshooting
+
+| Error | Fix |
+|-------|-----|
+| `EOTP` in CI | Replace `NPM_TOKEN` with a **Classic → Automation** token (not granular publish) |
+| `HttpError` creating PR | Merge `origin/changeset-release/main` into `main` manually, then re-run Release |
+| `E404` on publish | Ensure your npm user is a member of the `@cobusgreyling` org with publish access |
+
+Re-run publish after fixing the token:
+
+```bash
+gh workflow run release.yml --repo cobusgreyling/harness-foundry
+```
+
 ## First publish order
 
 Changesets publishes all bumped packages. Workspace deps resolve automatically. Run `pnpm smoke` after publish to verify the packed CLI.

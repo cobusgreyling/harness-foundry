@@ -46,6 +46,7 @@ jobs:
             exit 0
           fi
           npm whoami
+          echo "::notice::NPM_TOKEN must be a Classic Automation token (bypasses 2FA). Granular publish tokens fail with EOTP in CI."
 
       - name: Create release PR or publish
         uses: changesets/action@v1
