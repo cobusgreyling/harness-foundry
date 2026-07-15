@@ -1,0 +1,5 @@
+id: observability/span-per-turn
+layer: reliability
+description: Emit a trace span for each agent turn
+defaults:
+  format: jsonl

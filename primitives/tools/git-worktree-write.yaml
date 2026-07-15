@@ -1,0 +1,5 @@
+id: tools/git-worktree-write
+layer: composition
+description: Git worktree with write access for implementer loops
+defaults:
+  operations: [read, write, commit]

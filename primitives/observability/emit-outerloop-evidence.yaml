@@ -1,0 +1,6 @@
+id: emit/outerloop-evidence
+layer: reliability
+description: Emit evidence package hook for outerloop governance
+defaults:
+  adapter: outerloop
+  emitOn: [session.end]

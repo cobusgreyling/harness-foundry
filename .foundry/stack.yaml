@@ -1,0 +1,13 @@
+name: harness-foundry
+version: 1.0.0
+description: Self-referential stack for maintaining this repo
+layers:
+  interface:
+    - primitive: model/mock
+  composition:
+    - primitive: context/state-file
+  execution:
+    - primitive: control/token-budget-100k
+  reliability:
+    - primitive: observability/span-per-turn
+    - primitive: emit/outerloop-evidence

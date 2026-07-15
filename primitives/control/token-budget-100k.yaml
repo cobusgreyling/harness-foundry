@@ -1,0 +1,5 @@
+id: control/token-budget-100k
+layer: execution
+description: Hard token budget per session
+defaults:
+  maxTokens: 100000

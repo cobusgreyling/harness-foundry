@@ -1,0 +1,14 @@
+name: minimal
+version: 1.0.0
+description: Smallest reliable harness stack
+layers:
+  interface:
+    - primitive: model/mock
+  composition:
+    - primitive: context/state-file
+  execution:
+    - primitive: control/token-budget-100k
+    - primitive: sandbox/worktree-isolated
+  reliability:
+    - primitive: observability/span-per-turn
+    - primitive: emit/outerloop-evidence

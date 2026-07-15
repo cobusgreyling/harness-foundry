@@ -1,0 +1,52 @@
+{
+  "name": "@cobusgreyling/harness-foundry",
+  "version": "0.1.0",
+  "description": "Composable harness runtime for production agents.",
+  "keywords": [
+    "harness-foundry",
+    "harness-engineering",
+    "agent-runtime",
+    "composable-primitives",
+    "cli"
+  ],
+  "type": "module",
+  "bin": {
+    "foundry": "./dist/cli.js"
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "start": "node dist/cli.js",
+    "test": "vitest run",
+    "prepublishOnly": "pnpm run build && pnpm run test",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@cobusgreyling/harness-foundry-compose": "workspace:*",
+    "@cobusgreyling/harness-foundry-core": "workspace:*",
+    "@cobusgreyling/harness-foundry-evolve": "workspace:*",
+    "@cobusgreyling/harness-foundry-runtime": "workspace:*",
+    "@cobusgreyling/harness-foundry-trace": "workspace:*",
+    "chalk": "^5.4.1",
+    "commander": "^14.0.0",
+    "yaml": "^2.8.0"
+  },
+  "devDependencies": {
+    "@types/node": "^26.0.0",
+    "typescript": "^6.0.3",
+    "vitest": "^3.2.4"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cobusgreyling/harness-foundry.git",
+    "directory": "packages/cli"
+  }
+}

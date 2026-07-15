@@ -1,0 +1,31 @@
+# Dependencies
+node_modules/
+
+# Build
+dist/
+.turbo/
+*.tsbuildinfo
+
+# Environment
+.env
+.env.local
+
+# IDE / editor
+.idea/
+.vscode/
+*.swp
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs & temp
+*.log
+tmp/
+temp/
+
+# Runtime data (local dev)
+.foundry/sessions/
+!examples/**/.foundry/
+examples/**/.demo-run/

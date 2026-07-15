@@ -1,0 +1,5 @@
+id: sandbox/worktree-isolated
+layer: execution
+description: Isolated worktree sandbox for agent writes
+defaults:
+  isolation: worktree

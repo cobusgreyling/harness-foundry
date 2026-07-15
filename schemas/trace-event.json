@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://harness-foundry.dev/schemas/trace-event.json",
+  "title": "TraceEvent",
+  "type": "object",
+  "required": ["id", "sessionId", "timestamp", "type"],
+  "properties": {
+    "id": { "type": "string", "format": "uuid" },
+    "sessionId": { "type": "string", "format": "uuid" },
+    "timestamp": { "type": "string", "format": "date-time" },
+    "type": {
+      "type": "string",
+      "enum": [
+        "session.start",
+        "session.end",
+        "turn.start",
+        "turn.end",
+        "tool.call",
+        "tool.result",
+        "recovery.triggered",
+        "evidence.emitted",
+        "stack.resolved",
+        "error"
+      ]
+    },
+    "layer": {
+      "type": "string",
+      "enum": ["interface", "composition", "execution", "reliability"]
+    },
+    "primitive": { "type": "string" },
+    "detail": { "type": "string" },
+    "metadata": { "type": "object", "additionalProperties": true }
+  },
+  "additionalProperties": false
+}

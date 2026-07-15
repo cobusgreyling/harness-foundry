@@ -1,0 +1,5 @@
+id: context/state-file
+layer: composition
+description: Project state file (.foundry/state/STATE.md) loaded each session
+defaults:
+  path: .foundry/state/STATE.md

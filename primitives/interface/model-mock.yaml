@@ -1,0 +1,6 @@
+id: model/mock
+layer: interface
+description: Mock model provider for local development and tests
+defaults:
+  provider: mock
+  streaming: false

@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://harness-foundry.dev/schemas/primitive-ref.json",
+  "title": "PrimitiveRef",
+  "type": "object",
+  "required": ["primitive"],
+  "properties": {
+    "primitive": { "type": "string", "minLength": 1 },
+    "version": { "type": "string" },
+    "config": { "type": "object", "additionalProperties": true }
+  },
+  "additionalProperties": false
+}
