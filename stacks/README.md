@@ -1,7 +1,12 @@
 # Stacks
 
-Opinionated harness compositions built from primitives. Copy a stack into your project with `foundry init`, or reference these as templates.
+Opinionated harness compositions built from primitives.
 
-| Stack | Use case |
-|-------|----------|
-| `minimal/` | Smallest reliable harness — local dev, CI smoke |
+| Stack | Preset | Use case |
+|-------|--------|----------|
+| `minimal/` | `--from minimal` | Smallest reliable harness — CI smoke, exploration |
+| `implementer/` | `--from implementer` | Write + recovery + evidence for feature work |
+
+```bash
+foundry init --from implementer --name my-app
+```

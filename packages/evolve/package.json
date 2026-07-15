@@ -1,6 +1,6 @@
 {
   "name": "@cobusgreyling/harness-foundry-evolve",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Trace-driven harness evolution (L1 report-only)",
   "type": "module",
   "main": "./dist/index.js",

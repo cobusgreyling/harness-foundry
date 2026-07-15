@@ -1,6 +1,6 @@
 {
   "name": "@cobusgreyling/harness-foundry-runtime",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Harness session runtime and turn loop",
   "type": "module",
   "main": "./dist/index.js",
@@ -14,22 +14,23 @@
   "files": ["dist"],
   "scripts": {
     "build": "tsc",
-    "test": "vitest run --passWithNoTests",
+    "test": "vitest run",
     "clean": "rm -rf dist"
   },
   "dependencies": {
     "@cobusgreyling/harness-foundry-compose": "workspace:*",
     "@cobusgreyling/harness-foundry-core": "workspace:*",
     "@cobusgreyling/harness-foundry-emit": "workspace:*",
+    "@cobusgreyling/harness-foundry-interface": "workspace:*",
+    "@cobusgreyling/harness-foundry-mcp": "workspace:*",
     "@cobusgreyling/harness-foundry-trace": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^26.0.0",
     "typescript": "^6.0.3",
-    "vitest": "^3.2.4"
+    "vitest": "^3.2.4",
+    "yaml": "^2.8.0"
   },
-  "publishConfig": {
-    "access": "public"
-  },
+  "publishConfig": { "access": "public" },
   "license": "MIT"
 }

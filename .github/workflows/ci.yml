@@ -16,8 +16,11 @@ jobs:
           version: 10.31.0
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
       - run: pnpm test
+      - run: pnpm lint
+      - run: pnpm demo
+      - run: bash scripts/smoke-test-published.sh

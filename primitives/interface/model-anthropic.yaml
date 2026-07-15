@@ -1,0 +1,7 @@
+id: model/anthropic
+layer: interface
+description: Anthropic Claude via Messages API (requires ANTHROPIC_API_KEY)
+defaults:
+  provider: anthropic
+  model: claude-sonnet-4-20250514
+  streaming: false

@@ -1,4 +1,4 @@
-# harness-foundry — Specification (v0.1)
+# harness-foundry — Specification (v0.2)
 
 > **New here?** Read [docs/concepts.md](docs/concepts.md) first (5 min).
 
@@ -8,64 +8,56 @@
 
 | Repo | Owns |
 |------|------|
-| loop-engineering | Patterns for *designing* reliable inner loops |
+| [loop-engineering](https://github.com/cobusgreyling/loop-engineering) | Patterns for *designing* reliable inner loops |
 | **harness-foundry** | Runtime primitives that *execute* harnesses |
-| outerloop | Governance: evidence, verdict, answerability |
+| [outerloop](https://github.com/cobusgreyling/outerloop) | Governance: evidence, verdict, answerability |
 
 ## Four-layer taxonomy
 
 ### L1 — Interface
-Model providers, message formats, streaming adapters.
+Model providers (`model/mock`, `model/anthropic`). Package: `@cobusgreyling/harness-foundry-interface`.
 
 ### L2 — Composition
-Tools, skills, memory scopes, context assembly. Primitives in `primitives/context/`, `primitives/tools/`.
+Tools, skills, context. Primitives in `primitives/context/`, `primitives/tools/`. MCP stub: `@cobusgreyling/harness-foundry-mcp`.
 
 ### L3 — Execution
-Turn loop, sandbox isolation, permissions, budgets. Primitives in `primitives/control/`.
+Turn loop, sandbox, budgets. Package: `@cobusgreyling/harness-foundry-runtime`.
 
 ### L4 — Reliability
-Traces, recovery, evolution, evidence emission. Primitives in `primitives/observability/`.
+Traces, recovery, evolution, evidence. Packages: `trace`, `evolve`, `emit`.
 
 ## Core artifacts
 
 ### HarnessStack (`stack.yaml`)
-Declarative composition of primitives across four layers. Validated by `@cobusgreyling/harness-foundry-compose`.
+Declarative primitive composition across four layers.
+
+### StackLock (`stack.lock`)
+Primitive digests locked per session run.
 
 ### TraceEvent (`trace.jsonl`)
-Append-only session log. One JSON object per line. Schema: [schemas/trace-event.json](schemas/trace-event.json).
+Events: `primitive.activate`, `primitive.complete`, `recovery.triggered`, `evidence.emitted`.
 
-### SessionManifest (`manifest.json`)
-Session metadata: stack version, turn count, status, trace path.
+### EvolveReport (L1) / EvolveProposal (L2)
+Trace-driven improvement. L2 requires human review before apply.
 
-### EvolveReport (L1)
-Trace analysis with findings and suggestions. Report-only — no auto-apply in v0.1.
-
-## CLI commands (v0.1)
+## CLI commands (v0.2)
 
 | Command | Purpose |
 |---------|---------|
-| `foundry init` | Scaffold `.foundry/` |
+| `foundry init [--from minimal\|implementer]` | Scaffold `.foundry/` |
+| `foundry validate` | Validate stack against catalogue |
 | `foundry stack show` | Display active stack |
-| `foundry run` | Execute session against stack |
-| `foundry trace show` | Inspect session trace |
-| `foundry evolve report` | L1 evolution report |
+| `foundry primitives list` | List primitives |
+| `foundry sessions list` | List sessions |
+| `foundry run` | Execute session |
+| `foundry trace show` | Inspect trace |
+| `foundry evolve report` | L1 report |
+| `foundry evolve proposal` | L2 proposal |
 
 ## outerloop integration
 
-Enable in `.foundry/hooks/outerloop.yaml`:
+Enable in `.foundry/hooks/outerloop.yaml`. Emits full `EvidencePackage` via `@cobusgreyling/outerloop-core`.
 
-```yaml
-enabled: true
-adapter: outerloop
-emitOn: [session.end]
-```
+## v0.3 roadmap
 
-v0.1 writes `evidence-stub.json`. v0.2 wires `@cobusgreyling/outerloop-evidence`.
-
-## v0.2 roadmap
-
-- Real model adapters (Anthropic, OpenAI)
-- MCP tool dispatch
-- Recovery primitives (revert-on-fail)
-- L2 stack diff proposals from evolve reports
-- Full EvidencePackage emission
+See [ROADMAP.md](ROADMAP.md).

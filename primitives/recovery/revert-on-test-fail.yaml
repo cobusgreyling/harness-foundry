@@ -1,0 +1,6 @@
+id: recovery/revert-on-test-fail
+layer: reliability
+description: Revert worktree changes when verification tests fail
+defaults:
+  trigger: test.fail
+  action: git.revert

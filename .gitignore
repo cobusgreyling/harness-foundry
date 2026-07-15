@@ -4,6 +4,7 @@ node_modules/
 # Build
 dist/
 .turbo/
+packages/compose/catalog/
 *.tsbuildinfo
 
 # Environment

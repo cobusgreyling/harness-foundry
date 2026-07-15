@@ -1,9 +1,11 @@
 import fs from "node:fs/promises";
 import { randomUUID } from "node:crypto";
 import {
+  loadMergedCatalog,
   loadStackFromFile,
   resolveStack,
   validateStack,
+  writeStackLock,
 } from "@cobusgreyling/harness-foundry-compose";
 import {
   SessionManifestSchema,
@@ -16,6 +18,7 @@ import {
 } from "@cobusgreyling/harness-foundry-core";
 import { maybeEmitEvidence } from "@cobusgreyling/harness-foundry-emit";
 import { TraceRecorder } from "@cobusgreyling/harness-foundry-trace";
+import { activatePrimitive } from "./activate.js";
 
 export type RunSessionOptions = {
   projectRoot: string;
@@ -34,11 +37,13 @@ export async function runSession(options: RunSessionOptions): Promise<RunSession
     options;
 
   const stack = await loadStackFromFile(stackPath(projectRoot));
-  const validation = validateStack(stack);
+  const catalog = await loadMergedCatalog(projectRoot);
+  const validation = validateStack(stack, catalog);
   if (!validation.valid) {
     throw new Error(`Invalid stack: ${validation.errors.join("; ")}`);
   }
 
+  await writeStackLock(projectRoot, stack, catalog);
   const resolved = resolveStack(stack);
   const sessionId = randomUUID();
   const traceFile = sessionTracePath(projectRoot, sessionId);
@@ -74,6 +79,8 @@ export async function runSession(options: RunSessionOptions): Promise<RunSession
     metadata: { primitives: resolved.primitives.map((p) => p.primitive) },
   });
 
+  const activateCtx = { projectRoot, sessionId, goal, recorder };
+
   for (let turn = 1; turn <= turns; turn += 1) {
     await recorder.record({
       sessionId,
@@ -84,18 +91,10 @@ export async function runSession(options: RunSessionOptions): Promise<RunSession
 
     if (!dryRun) {
       for (const ref of resolved.primitives) {
-        await recorder.record({
-          sessionId,
-          type: "tool.call",
-          primitive: ref.primitive,
-          detail: `Activated ${ref.primitive}`,
-        });
-        await recorder.record({
-          sessionId,
-          type: "tool.result",
-          primitive: ref.primitive,
-          detail: `OK`,
-        });
+        const result = await activatePrimitive(ref, activateCtx);
+        if (!result.ok && ref.primitive.startsWith("recovery/")) {
+          manifest = { ...manifest, status: "recovered" };
+        }
       }
     }
 
@@ -116,13 +115,14 @@ export async function runSession(options: RunSessionOptions): Promise<RunSession
     stack,
     goal,
     recorder,
+    tracePath: traceFile,
   });
 
   const endedAt = new Date().toISOString();
   manifest = {
     ...manifest,
     endedAt,
-    status: "completed",
+    status: manifest.status === "recovered" ? "recovered" : "completed",
   };
   await fs.writeFile(manifestFile, `${JSON.stringify(manifest, null, 2)}\n`, "utf8");
 
@@ -130,7 +130,7 @@ export async function runSession(options: RunSessionOptions): Promise<RunSession
     sessionId,
     type: "session.end",
     detail: "Session complete",
-    metadata: { turnCount: manifest.turnCount },
+    metadata: { turnCount: manifest.turnCount, status: manifest.status },
   });
 
   return { manifest, stack };

@@ -1,6 +1,6 @@
 {
   "name": "@cobusgreyling/harness-foundry-emit",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Evidence emission hooks for outerloop and custom adapters",
   "type": "module",
   "main": "./dist/index.js",
@@ -20,6 +20,7 @@
   "dependencies": {
     "@cobusgreyling/harness-foundry-core": "workspace:*",
     "@cobusgreyling/harness-foundry-trace": "workspace:*",
+    "@cobusgreyling/outerloop-core": "^0.1.1",
     "yaml": "^2.8.0"
   },
   "devDependencies": {
@@ -27,8 +28,6 @@
     "typescript": "^6.0.3",
     "vitest": "^3.2.4"
   },
-  "publishConfig": {
-    "access": "public"
-  },
+  "publishConfig": { "access": "public" },
   "license": "MIT"
 }

@@ -1,6 +1,6 @@
 {
   "name": "@cobusgreyling/harness-foundry-compose",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Compose harness stacks from declarative primitives",
   "type": "module",
   "main": "./dist/index.js",
@@ -11,8 +11,9 @@
       "import": "./dist/index.js"
     }
   },
-  "files": ["dist"],
+  "files": ["dist", "catalog"],
   "scripts": {
+    "prebuild": "node -e \"const fs=require('fs');const p=require('path');const s=p.resolve('catalog');fs.rmSync(s,{recursive:true,force:true});fs.cpSync(p.resolve('../../primitives'),s,{recursive:true});\"",
     "build": "tsc",
     "test": "vitest run",
     "clean": "rm -rf dist"

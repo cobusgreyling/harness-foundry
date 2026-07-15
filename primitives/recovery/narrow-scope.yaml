@@ -1,0 +1,6 @@
+id: recovery/narrow-scope
+layer: reliability
+description: Narrow session scope and retry after repeated failures
+defaults:
+  trigger: error.threshold
+  maxRetries: 2

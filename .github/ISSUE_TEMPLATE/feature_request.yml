@@ -1,0 +1,21 @@
+name: Feature request
+description: Suggest a primitive, stack, or CLI improvement
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem or use case
+    validations:
+      required: true
+  - type: dropdown
+    id: layer
+    attributes:
+      label: Four-layer area
+      options:
+        - interface
+        - composition
+        - execution
+        - reliability
+        - cli
+        - docs

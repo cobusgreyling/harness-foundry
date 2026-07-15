@@ -1,6 +1,6 @@
 {
   "name": "@cobusgreyling/harness-foundry-trace",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Trace recording and inspection for harness sessions",
   "type": "module",
   "main": "./dist/index.js",

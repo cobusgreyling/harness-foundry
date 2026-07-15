@@ -25,6 +25,20 @@ export const HarnessStackSchema = z.object({
   }),
 });
 
+export const StackLockEntrySchema = z.object({
+  primitive: z.string(),
+  digest: z.string(),
+  layer: LayerNameSchema,
+  resolvedAt: z.string().datetime(),
+});
+
+export const StackLockSchema = z.object({
+  stackName: z.string(),
+  stackVersion: z.string(),
+  lockedAt: z.string().datetime(),
+  entries: z.array(StackLockEntrySchema),
+});
+
 export const PrimitiveDefinitionSchema = z.object({
   id: z.string().min(1),
   layer: LayerNameSchema,
@@ -37,8 +51,8 @@ export const TraceEventTypeSchema = z.enum([
   "session.end",
   "turn.start",
   "turn.end",
-  "tool.call",
-  "tool.result",
+  "primitive.activate",
+  "primitive.complete",
   "recovery.triggered",
   "evidence.emitted",
   "stack.resolved",
@@ -82,6 +96,17 @@ export const EvolveReportSchema = z.object({
   ),
 });
 
+export const EvolveProposalSchema = z.object({
+  id: z.string().uuid(),
+  reportId: z.string().uuid(),
+  sessionId: z.string().uuid(),
+  generatedAt: z.string().datetime(),
+  mode: z.literal("L2-proposal"),
+  summary: z.string(),
+  additions: z.array(PrimitiveRefSchema).default([]),
+  path: z.string(),
+});
+
 export const EvidenceHookSchema = z.object({
   enabled: z.boolean().default(false),
   adapter: z.enum(["outerloop", "custom"]).default("outerloop"),
@@ -91,9 +116,11 @@ export const EvidenceHookSchema = z.object({
 export type LayerName = z.infer<typeof LayerNameSchema>;
 export type PrimitiveRef = z.infer<typeof PrimitiveRefSchema>;
 export type HarnessStack = z.infer<typeof HarnessStackSchema>;
+export type StackLock = z.infer<typeof StackLockSchema>;
 export type PrimitiveDefinition = z.infer<typeof PrimitiveDefinitionSchema>;
 export type TraceEventType = z.infer<typeof TraceEventTypeSchema>;
 export type TraceEvent = z.infer<typeof TraceEventSchema>;
 export type SessionManifest = z.infer<typeof SessionManifestSchema>;
 export type EvolveReport = z.infer<typeof EvolveReportSchema>;
+export type EvolveProposal = z.infer<typeof EvolveProposalSchema>;
 export type EvidenceHook = z.infer<typeof EvidenceHookSchema>;

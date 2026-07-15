@@ -1,0 +1,13 @@
+{
+  "name": "harness-foundry",
+  "image": "mcr.microsoft.com/devcontainers/typescript-node:22",
+  "postCreateCommand": "corepack enable && pnpm install && pnpm build",
+  "postStartCommand": "echo 'Run: pnpm demo'",
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "terminal.integrated.defaultProfile.linux": "bash"
+      }
+    }
+  }
+}

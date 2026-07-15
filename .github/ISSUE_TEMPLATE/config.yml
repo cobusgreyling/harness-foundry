@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: outerloop governance
+    url: https://github.com/cobusgreyling/outerloop
+    about: Evidence, verdict, and answerability
+  - name: loop-engineering patterns
+    url: https://github.com/cobusgreyling/loop-engineering
+    about: Inner loop design patterns

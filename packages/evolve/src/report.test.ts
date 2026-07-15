@@ -23,7 +23,11 @@ describe("generateEvolveReport", () => {
     await recorder.record({ sessionId, type: "session.start" });
     await recorder.record({ sessionId, type: "session.end" });
 
-    const report = await generateEvolveReport({ projectRoot, sessionId, tracePath });
+    const report = await generateEvolveReport({
+      projectRoot,
+      sessionId,
+      tracePath,
+    });
     expect(report.mode).toBe("L1-report-only");
     expect(report.findings.length).toBeGreaterThan(0);
   });

@@ -1,0 +1,24 @@
+name: Primitive request
+description: Propose a new composable primitive
+labels: ["primitive"]
+body:
+  - type: input
+    id: id
+    attributes:
+      label: Primitive ID
+      placeholder: control/token-budget-50k
+    validations:
+      required: true
+  - type: dropdown
+    id: layer
+    attributes:
+      label: Layer
+      options: [interface, composition, execution, reliability]
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+    validations:
+      required: true

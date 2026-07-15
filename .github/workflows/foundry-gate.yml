@@ -1,0 +1,42 @@
+name: Foundry Gate
+
+on:
+  workflow_call:
+    inputs:
+      project-root:
+        description: Project root containing .foundry/
+        required: false
+        type: string
+        default: .
+  pull_request:
+    paths:
+      - ".foundry/**"
+      - "stacks/**"
+      - "primitives/**"
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.31.0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+
+      - name: Validate harness stack
+        working-directory: ${{ github.event_name == 'workflow_call' && inputs.project-root || '.' }}
+        run: |
+          if [ -f .foundry/stack.yaml ]; then
+            node packages/cli/dist/cli.js validate
+          else
+            echo "No .foundry/stack.yaml — skipping validate"
+          fi
