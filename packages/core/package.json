@@ -1,6 +1,6 @@
 {
   "name": "@cobusgreyling/harness-foundry-core",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Core types, Zod schemas, and paths for harness-foundry",
   "keywords": [
     "harness-foundry",
@@ -18,7 +18,9 @@
       "import": "./dist/index.js"
     }
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsc",
     "test": "vitest run",

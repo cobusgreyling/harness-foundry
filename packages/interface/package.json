@@ -1,6 +1,6 @@
 {
   "name": "@cobusgreyling/harness-foundry-interface",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Model interface adapters for harness-foundry",
   "type": "module",
   "main": "./dist/index.js",
@@ -11,7 +11,9 @@
       "import": "./dist/index.js"
     }
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsc",
     "test": "vitest run",
@@ -25,6 +27,8 @@
     "typescript": "^6.0.3",
     "vitest": "^3.2.4"
   },
-  "publishConfig": { "access": "public" },
+  "publishConfig": {
+    "access": "public"
+  },
   "license": "MIT"
 }

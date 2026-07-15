@@ -1,6 +1,6 @@
 {
   "name": "@cobusgreyling/harness-foundry",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Composable harness runtime for production agents.",
   "keywords": [
     "harness-foundry",
@@ -13,7 +13,9 @@
   "bin": {
     "foundry": "./dist/cli.js"
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",

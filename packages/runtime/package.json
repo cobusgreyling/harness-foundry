@@ -1,6 +1,6 @@
 {
   "name": "@cobusgreyling/harness-foundry-runtime",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Harness session runtime and turn loop",
   "type": "module",
   "main": "./dist/index.js",
@@ -11,7 +11,9 @@
       "import": "./dist/index.js"
     }
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsc",
     "test": "vitest run",
@@ -31,6 +33,8 @@
     "vitest": "^3.2.4",
     "yaml": "^2.8.0"
   },
-  "publishConfig": { "access": "public" },
+  "publishConfig": {
+    "access": "public"
+  },
   "license": "MIT"
 }
