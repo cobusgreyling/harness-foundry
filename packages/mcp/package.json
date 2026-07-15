@@ -1,6 +1,6 @@
 {
   "name": "@cobusgreyling/harness-foundry-mcp",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "MCP tool dispatch adapter for harness-foundry",
   "type": "module",
   "main": "./dist/index.js",

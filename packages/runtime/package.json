@@ -1,6 +1,6 @@
 {
   "name": "@cobusgreyling/harness-foundry-runtime",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Harness session runtime and turn loop",
   "type": "module",
   "main": "./dist/index.js",
