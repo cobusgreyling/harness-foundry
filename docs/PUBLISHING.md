@@ -2,15 +2,47 @@
 
 Packages publish under `@cobusgreyling/harness-foundry*`.
 
-## Local
+## Token requirements
+
+Publishing requires a token that **bypasses 2FA**:
+
+| Token type | CI publish | Local publish |
+|------------|------------|---------------|
+| **Classic → Automation** | ✅ | ✅ |
+| Granular / Publish | ❌ EOTP | Needs `NPM_OTP` |
+| Read-only | ❌ | ❌ |
+
+Create at [npmjs.com → Access Tokens](https://www.npmjs.com/settings/tokens) → **Classic** → **Automation**.
+
+## GitHub secret
+
+```bash
+gh secret set NPM_TOKEN --repo cobusgreyling/harness-foundry
+# paste Automation token when prompted — never commit or chat-share tokens
+```
+
+The [release workflow](../.github/workflows/release.yml) uses this on pushes to `main`.
+
+## Local publish
 
 ```bash
 pnpm build && pnpm test
-NPM_OTP=123456 pnpm changeset publish  # if 2FA enabled
+pnpm changeset publish
 ```
 
-## CI
+If your account has 2FA and you are not using an Automation token:
 
-Set `NPM_TOKEN` (Classic → Automation) on the GitHub repo. Pushes to `main` run [release.yml](../.github/workflows/release.yml) via Changesets.
+```bash
+NPM_OTP=123456 pnpm changeset publish
+```
 
-See [outerloop publishing](https://github.com/cobusgreyling/outerloop/blob/main/docs/PUBLISHING.md) for token setup.
+## Verify
+
+```bash
+npm view @cobusgreyling/harness-foundry version
+npx @cobusgreyling/harness-foundry init --help
+```
+
+## First publish order
+
+Changesets publishes all bumped packages. Workspace deps resolve automatically. Run `pnpm smoke` after publish to verify the packed CLI.
