@@ -32,7 +32,7 @@
     "type": "git",
     "url": "git+https://github.com/cobusgreyling/harness-foundry.git"
   },
-  "homepage": "https://github.com/cobusgreyling/harness-foundry#readme",
+  "homepage": "https://github.com/cobusgreyling/harness-foundry/blob/main/docs/showcase.md",
   "bugs": {
     "url": "https://github.com/cobusgreyling/harness-foundry/issues"
   },

@@ -13,6 +13,8 @@
 
 The missing runtime layer between model and reliable behaviour.
 
+→ **[Showcase](docs/showcase.md)** — demos, stacks, full-stack walkthroughs, and stories
+
 ## Ecosystem
 
 ```
@@ -26,7 +28,7 @@ loop-engineering  →  harness-foundry  →  outerloop
 | **harness-foundry** | Execute composable harness primitives |
 | [outerloop](https://github.com/cobusgreyling/outerloop) | Evidence, verdict, answerability |
 
-→ [Core concepts](docs/concepts.md) · [vs alternatives](docs/vs-alternatives.md) · [architecture](docs/architecture.md) · [**Full stack example**](examples/with-outerloop/)
+→ [Showcase](docs/showcase.md) · [Core concepts](docs/concepts.md) · [vs alternatives](docs/vs-alternatives.md) · [architecture](docs/architecture.md)
 
 ## The stack in 60 seconds
 

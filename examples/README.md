@@ -1,5 +1,7 @@
 # Examples
 
+→ **[Showcase](../docs/showcase.md)** — curated demos and stack walkthroughs
+
 | Example | Description |
 |---------|-------------|
 | [**with-outerloop**](./with-outerloop/) | **Flagship** — full stack: harness → evidence → verdict |
