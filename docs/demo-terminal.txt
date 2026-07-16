@@ -1,0 +1,105 @@
+$ pnpm demo
+
+=== 1. Init harness ===
+Harness "demo" initialized (minimal)
+  .foundry/stack.yaml
+  .foundry/stack.lock
+  .foundry/hooks/outerloop.yaml
+  .foundry/state/STATE.md
+
+Next: foundry validate && foundry run
+
+=== 2. Validate ===
+Stack is valid.
+
+=== 3. Show stack ===
+demo v1.0.0
+Smallest reliable harness stack
+
+interface
+  - model/mock
+
+composition
+  - context/state-file
+
+execution
+  - control/token-budget-100k
+  - sandbox/worktree-isolated
+
+reliability
+  - observability/span-per-turn
+  - emit/outerloop-evidence
+
+=== 4. Primitives ===
+composition  context/state-file
+  Project state file (.foundry/state/STATE.md) loaded each session
+execution    control/token-budget-100k
+  Hard token budget per session
+reliability  emit/outerloop-evidence
+  Emit evidence package hook for outerloop governance
+interface    model/anthropic
+  Anthropic Claude via Messages API (requires ANTHROPIC_API_KEY)
+interface    model/mock
+  Mock model provider for local development and tests
+reliability  observability/span-per-turn
+  Emit a trace span for each agent turn
+
+=== 5. Run session ===
+Session complete
+  ID: 41dfdac5-921e-4e13-9ade-1f7e35932a3c
+  Host: standalone
+  Status: completed
+  Turns: 1
+  Trace: .foundry/sessions/41dfdac5-921e-4e13-9ade-1f7e35932a3c/trace.jsonl
+
+Next: foundry trace show --session 41dfdac5-921e-4e13-9ade-1f7e35932a3c
+
+=== 6. Sessions ===
+41dfdac5-921e-4e13-9ade-1f7e35932a3c 2026-07-16T08:11:54.583Z completed turns=1
+
+=== 7. Trace ===
+2026-07-16T08:11:54.583Z session.start
+  Demo harness session
+2026-07-16T08:11:54.584Z stack.resolved
+  6 primitives resolved
+2026-07-16T08:11:54.584Z turn.start
+  Turn 1
+2026-07-16T08:11:54.585Z primitive.activate (model/mock)
+  Activating model/mock
+2026-07-16T08:11:54.585Z primitive.complete (model/mock)
+  [mock] Acknowledged goal: Demo harness session
+2026-07-16T08:11:54.585Z primitive.activate (context/state-file)
+  Activating context/state-file
+2026-07-16T08:11:54.585Z primitive.complete (context/state-file)
+  Loaded state (82 chars)
+2026-07-16T08:11:54.585Z primitive.activate (control/token-budget-100k)
+  Activating control/token-budget-100k
+2026-07-16T08:11:54.586Z primitive.complete (control/token-budget-100k)
+  Token budget 100k active
+2026-07-16T08:11:54.586Z primitive.activate (sandbox/worktree-isolated)
+  Activating sandbox/worktree-isolated
+2026-07-16T08:11:54.777Z primitive.complete (sandbox/worktree-isolated)
+  Isolated worktree at .foundry/sessions/.../worktree
+2026-07-16T08:11:54.778Z primitive.activate (observability/span-per-turn)
+  Activating observability/span-per-turn
+2026-07-16T08:11:54.778Z primitive.complete (observability/span-per-turn)
+  Primitive observability/span-per-turn ready
+2026-07-16T08:11:54.779Z primitive.activate (emit/outerloop-evidence)
+  Activating emit/outerloop-evidence
+2026-07-16T08:11:54.779Z primitive.complete (emit/outerloop-evidence)
+  Primitive emit/outerloop-evidence ready
+2026-07-16T08:11:54.779Z turn.end
+  Turn 1 complete
+2026-07-16T08:11:54.781Z session.end
+  Session complete
+
+=== 8. Evolve report (L1) ===
+Evolution report 7e6d7053-f354-472d-bfa8-a4493993d5da (L1 report-only)
+  [info] No evolution signals detected in trace
+
+=== 9. Evolve proposal (L2) ===
+L2 proposal written (report dbf1f6b5-2468-43cb-9fce-a4135e8f928b)
+  .foundry/evolve/proposals/846aad1c-2e9f-4647-9fbd-a12a7ee9a5f9.yaml
+Human gate: review before applying to stack.yaml
+
+Demo complete. Artifacts in .foundry/

@@ -11,6 +11,7 @@
     "clean": "turbo run clean && rm -rf node_modules",
     "foundry": "node packages/cli/dist/cli.js",
     "demo": "bash scripts/demo.sh",
+    "demo:outerloop": "bash scripts/demo-with-outerloop.sh",
     "changeset": "changeset",
     "version-packages": "changeset version",
     "version:ci": "changeset version && pnpm install --frozen-lockfile",

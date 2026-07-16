@@ -26,7 +26,7 @@ loop-engineering  →  harness-foundry  →  outerloop
 | **harness-foundry** | Execute composable harness primitives |
 | [outerloop](https://github.com/cobusgreyling/outerloop) | Evidence, verdict, answerability |
 
-→ [Core concepts](docs/concepts.md) · [vs alternatives](docs/vs-alternatives.md) · [architecture](docs/architecture.md)
+→ [Core concepts](docs/concepts.md) · [vs alternatives](docs/vs-alternatives.md) · [architecture](docs/architecture.md) · [**Full stack example**](examples/with-outerloop/)
 
 ## The stack in 60 seconds
 
@@ -46,7 +46,14 @@ foundry run --goal "Verify harness wiring"
 foundry sessions list
 foundry trace show --session <id>
 foundry evolve report --session <id>
-foundry host integrate cursor
+```
+
+**+ Governance:** see the [with-outerloop example](examples/with-outerloop/) for evidence → verdict → answerability.
+
+**+ Cursor / Claude Code:**
+
+```bash
+foundry host integrate cursor    # or claude-code
 foundry run --goal "Implement feature X" --host cursor
 ```
 
@@ -57,22 +64,38 @@ git clone https://github.com/cobusgreyling/harness-foundry.git
 cd harness-foundry && pnpm install && pnpm build && pnpm demo
 ```
 
-<details>
-<summary>Example demo output</summary>
+## Demo (terminal)
+
+<details open>
+<summary><code>pnpm demo</code> — full session output</summary>
 
 ```
-=== 3. Run session ===
+=== 1. Init harness ===
+Harness "demo" initialized (minimal)
+  .foundry/stack.yaml
+  .foundry/stack.lock
+
+=== 2. Validate ===
+Stack is valid.
+
+=== 5. Run session ===
 Session complete
-  ID: c8ca022a-5d8f-4260-a040-a2ba3947b5a8
+  ID: 41dfdac5-921e-4e13-9ade-1f7e35932a3c
+  Host: standalone
   Status: completed
   Turns: 1
 
-=== 4. Trace ===
-primitive.activate (model/mock)
-primitive.complete (model/mock)
-...
+=== 7. Trace ===
+session.start → stack.resolved → turn.start
+primitive.activate (model/mock) → primitive.complete (model/mock)
+primitive.activate (sandbox/worktree-isolated) → ...
 session.end
+
+=== 9. Evolve proposal (L2) ===
+L2 proposal written — Human gate: review before applying to stack.yaml
 ```
+
+→ Full transcript: [docs/demo-terminal.txt](docs/demo-terminal.txt)
 
 </details>
 
@@ -84,7 +107,8 @@ session.end
 |---------|-------------|
 | **Smoke / CI** | `foundry init --from minimal` |
 | **Implementer** | `foundry init --from implementer` |
-| **+ Governance** | Enable `.foundry/hooks/outerloop.yaml` + [outerloop](https://github.com/cobusgreyling/outerloop) |
+| **+ Governance** | [with-outerloop example](examples/with-outerloop/) |
+| **+ IDE host** | `foundry host integrate cursor` |
 
 ## Four-layer taxonomy
 
@@ -102,12 +126,23 @@ session.end
 | `init` | Scaffold `.foundry/` with stack preset |
 | `validate` | Check stack against primitive catalogue |
 | `run` | Execute session, write trace + lock |
+| `host integrate` | Install Cursor / Claude Code integration |
 | `primitives list` | Browse available primitives |
 | `sessions list` | List past sessions |
 | `evolve report` | L1 trace analysis |
 | `evolve proposal` | L2 stack diff (human review) |
 
 → [CLI reference](docs/cli.md) · [API](docs/api.md) · [composition](docs/composition.md)
+
+## CI integration
+
+```yaml
+jobs:
+  foundry-gate:
+    uses: cobusgreyling/harness-foundry/.github/workflows/foundry-gate.yml@main
+```
+
+→ [docs/github-action.md](docs/github-action.md)
 
 ## Monorepo packages
 
@@ -121,16 +156,28 @@ session.end
 | `@cobusgreyling/harness-foundry-trace` | Trace recorder |
 | `@cobusgreyling/harness-foundry-evolve` | L1/L2 evolution |
 | `@cobusgreyling/harness-foundry-emit` | outerloop evidence |
+| `@cobusgreyling/harness-foundry-host` | Cursor / Claude Code adapters |
 | `@cobusgreyling/harness-foundry` | `foundry` CLI |
+
+## Status
+
+**v0.4.0** — Implementer execution, host adapters, npm publish. Phases v0.1–v0.3 complete.
+
+→ [CHANGELOG.md](./CHANGELOG.md) · [ROADMAP.md](./ROADMAP.md)
 
 ## Development
 
 ```bash
-pnpm install && pnpm build && pnpm test && pnpm lint
-pnpm foundry --help
+git clone https://github.com/cobusgreyling/harness-foundry.git
+cd harness-foundry && pnpm install && pnpm build && pnpm test
+pnpm demo
+pnpm demo:outerloop   # full stack with outerloop
 ```
 
-→ [CONTRIBUTING.md](CONTRIBUTING.md) · [ROADMAP.md](ROADMAP.md)
+**Dev Container:** open in VS Code / GitHub Codespaces — `.devcontainer/` runs install + build on create.
+
+→ [Contributor start here](https://github.com/cobusgreyling/harness-foundry/discussions/12) · [CONTRIBUTING.md](./CONTRIBUTING.md) · [Good first issues](docs/good-first-issues.md)  
+[Code of Conduct](./CODE_OF_CONDUCT.md) · [Security policy](./SECURITY.md)
 
 ## Contributors
 
@@ -138,8 +185,15 @@ pnpm foundry --help
 |------|--------|------|
 | Cobus Greyling | [@cobusgreyling](https://github.com/cobusgreyling) | Creator & maintainer |
 
-→ [CONTRIBUTORS.md](CONTRIBUTORS.md) · [contributors graph](https://github.com/cobusgreyling/harness-foundry/graphs/contributors)
+→ [CONTRIBUTORS.md](./CONTRIBUTORS.md) · [contributors graph](https://github.com/cobusgreyling/harness-foundry/graphs/contributors)
 
-## License
+## Contributing philosophy
 
-MIT — see [LICENSE](LICENSE).
+- Primitives are versioned, declarative, and swappable.
+- Traces drive evolution — report before you tune.
+- Human gates before stack auto-apply.
+- **Don't want to touch TypeScript?** [Propose a primitive](.github/ISSUE_TEMPLATE/primitive_request.yml).
+
+---
+
+*Built on [loop-engineering](https://github.com/cobusgreyling/loop-engineering), companion to [outerloop](https://github.com/cobusgreyling/outerloop), and the broader agentic engineering community.*

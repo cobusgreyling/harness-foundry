@@ -8,11 +8,11 @@
 | L2 | Proposal | Stack diffs suggested; human approves apply |
 | L3 | Auto-tune | Approved primitives auto-adjust within guardrails |
 
-v0.1 ships **L1 only**.
+**v0.2+** ships L1 reports and L2 proposals. L3 auto-tune is not implemented yet.
 
 ## Human gates
 
-- No stack auto-apply until L2 checklist complete
+- No stack auto-apply until `foundry evolve apply` ships (v0.4 roadmap)
 - Evidence emission disabled by default (`hooks/outerloop.yaml`)
 - High-risk primitive changes require explicit review
 
