@@ -2,6 +2,31 @@ import type { HarnessStack } from "@cobusgreyling/harness-foundry-core";
 
 export type StackPreset = "minimal" | "implementer";
 
+/** loop-engineering pattern / alias → stack preset (LE → Foundry funnel). */
+const PRESET_ALIASES: Record<string, StackPreset> = {
+  minimal: "minimal",
+  implementer: "implementer",
+  "daily-triage": "minimal",
+  "issue-triage": "minimal",
+  "changelog-drafter": "minimal",
+  "pr-babysitter": "implementer",
+  "ci-sweeper": "implementer",
+  "dependency-sweeper": "implementer",
+  "post-merge-cleanup": "implementer",
+};
+
+/**
+ * Resolve `foundry init --from` values, including loop-engineering pattern names
+ * and `loop-engineering:<pattern>` aliases.
+ */
+export function resolveStackPreset(from: string): StackPreset {
+  const raw = from.trim().toLowerCase();
+  const key = raw.startsWith("loop-engineering:")
+    ? raw.slice("loop-engineering:".length).trim()
+    : raw;
+  return PRESET_ALIASES[key] ?? "minimal";
+}
+
 export function minimalStack(name: string): HarnessStack {
   return {
     name,

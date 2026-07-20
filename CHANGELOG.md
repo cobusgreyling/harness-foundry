@@ -2,6 +2,13 @@
 
 All notable changes to harness-foundry are documented here. Package-level changelogs live under `packages/*/CHANGELOG.md`.
 
+## Unreleased
+
+### Ecosystem funnel
+
+- `foundry init --from` accepts loop-engineering pattern names and `loop-engineering:<pattern>` aliases (e.g. `daily-triage` → minimal, `ci-sweeper` → implementer)
+- Documented LE one-command path: `npx @cobusgreyling/loop-init . --with-foundry`
+
 ## v0.4.0 — 2026-07-16
 
 **Implementer execution, host adapters, npm publish.**

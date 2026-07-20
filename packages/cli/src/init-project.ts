@@ -2,6 +2,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import YAML from "yaml";
 import {
+  resolveStackPreset,
   saveStackToFile,
   stackFromPreset,
   type StackPreset,
@@ -13,7 +14,8 @@ import { foundryDir, hooksDir, stackPath } from "@cobusgreyling/harness-foundry-
 
 export type InitOptions = {
   name?: string;
-  from?: StackPreset;
+  /** Preset name, LE pattern, or `loop-engineering:<pattern>` alias. */
+  from?: StackPreset | string;
   withCursor?: boolean;
   withClaudeCode?: boolean;
 };
@@ -31,7 +33,7 @@ function defaultStackName(projectRoot: string, override?: string): string {
 }
 
 export async function initProject(cwd: string, options: InitOptions = {}): Promise<InitResult> {
-  const preset = options.from ?? "minimal";
+  const preset = resolveStackPreset(options.from ?? "minimal");
   const stackName = defaultStackName(cwd, options.name);
   const stack = stackFromPreset(preset, stackName);
   const filesWritten: string[] = [];

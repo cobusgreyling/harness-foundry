@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { resolveStack, validateStack } from "./load.js";
+import { resolveStackPreset } from "./stacks.js";
 import type { HarnessStack } from "@cobusgreyling/harness-foundry-core";
 
 const minimalStack: HarnessStack = {
@@ -17,6 +18,17 @@ describe("resolveStack", () => {
   it("flattens all layer primitives", () => {
     const resolved = resolveStack(minimalStack);
     expect(resolved.primitives).toHaveLength(4);
+  });
+});
+
+describe("resolveStackPreset", () => {
+  it("maps loop-engineering aliases", () => {
+    expect(resolveStackPreset("minimal")).toBe("minimal");
+    expect(resolveStackPreset("implementer")).toBe("implementer");
+    expect(resolveStackPreset("daily-triage")).toBe("minimal");
+    expect(resolveStackPreset("loop-engineering:ci-sweeper")).toBe("implementer");
+    expect(resolveStackPreset("loop-engineering:daily-triage")).toBe("minimal");
+    expect(resolveStackPreset("unknown-pattern")).toBe("minimal");
   });
 });
 

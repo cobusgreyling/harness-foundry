@@ -39,15 +39,18 @@ program
   .command("init")
   .description("Initialize .foundry harness scaffold in the current project")
   .option("--name <name>", "Harness stack name (default: directory name)")
-  .option("--from <preset>", "Stack preset: minimal | implementer", "minimal")
+  .option(
+    "--from <preset>",
+    "Stack preset or loop-engineering pattern (minimal | implementer | daily-triage | loop-engineering:ci-sweeper | …)",
+    "minimal",
+  )
   .option("--with-cursor", "Install Cursor rules and post-run hook")
   .option("--with-claude-code", "Install Claude Code helpers and post-run hook")
   .action(async (options: { name?: string; from: string; withCursor?: boolean; withClaudeCode?: boolean }) => {
-    const preset = options.from === "implementer" ? "implementer" : "minimal";
     const cwd = process.cwd();
     const result = await initProject(cwd, {
       name: options.name,
-      from: preset,
+      from: options.from,
       withCursor: options.withCursor,
       withClaudeCode: options.withClaudeCode,
     });
