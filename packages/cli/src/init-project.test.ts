@@ -27,4 +27,20 @@ describe("initProject", () => {
       fs.access(path.join(dir, ".foundry/hooks/outerloop.yaml")),
     ).resolves.toBeUndefined();
   });
+
+  it("accepts loop-engineering pattern aliases for --from", async () => {
+    const dir = await fs.mkdtemp(path.join(os.tmpdir(), "foundry-init-le-"));
+    tmpDirs.push(dir);
+
+    const reportOnly = await initProject(dir, {
+      name: "triage",
+      from: "loop-engineering:daily-triage",
+    });
+    expect(reportOnly.preset).toBe("minimal");
+
+    const dir2 = await fs.mkdtemp(path.join(os.tmpdir(), "foundry-init-le2-"));
+    tmpDirs.push(dir2);
+    const fix = await initProject(dir2, { from: "ci-sweeper" });
+    expect(fix.preset).toBe("implementer");
+  });
 });

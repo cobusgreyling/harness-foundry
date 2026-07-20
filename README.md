@@ -43,6 +43,10 @@ Compose harnesses from declarative primitives. Run sessions, record traces, evol
 
 ```bash
 npx @cobusgreyling/harness-foundry init --from minimal
+# From a loop-engineering pattern (LE → Foundry funnel):
+npx @cobusgreyling/harness-foundry init --from loop-engineering:daily-triage
+# Or scaffold both from LE:
+npx @cobusgreyling/loop-init . --pattern daily-triage --tool grok --with-foundry
 foundry validate
 foundry run --goal "Verify harness wiring"
 foundry sessions list
