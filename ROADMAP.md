@@ -28,8 +28,13 @@
 - [x] GitHub Action: reusable foundry-gate workflow
 - [x] npm publish (`@cobusgreyling/harness-foundry`)
 
-## v0.4 (next)
+## v0.4 (in progress)
 
+- [x] Real agent turn loop (model → tools → observe → budget)
+- [x] Built-in tools: `read_file`, `write_file`, `list_dir`, `run_command` (sandboxed)
+- [x] Enforce token + tool-call budgets from `control/token-budget-*`
+- [x] Tool-aware mock + Anthropic providers (`tool_use` / tool results)
+- [x] Trace events: `model.complete`, `tool.call`, `tool.result`, `budget.*`
 - [ ] OpenAI model adapter
 - [ ] Real MCP stdio transport
 - [ ] `foundry evolve apply` (behind human gate)

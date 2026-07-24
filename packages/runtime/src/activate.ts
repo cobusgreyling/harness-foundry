@@ -1,9 +1,8 @@
 import fs from "node:fs/promises";
 import path from "node:path";
-import { getModelProvider } from "@cobusgreyling/harness-foundry-interface";
-import { McpClient } from "@cobusgreyling/harness-foundry-mcp";
 import type { LayerName, PrimitiveRef } from "@cobusgreyling/harness-foundry-core";
 import type { TraceRecorder } from "@cobusgreyling/harness-foundry-trace";
+import { parseBudgetConfig } from "./execution/budget.js";
 import type { SessionRuntime } from "./execution/runtime-state.js";
 import { resolveTestCommand } from "./execution/verify.js";
 import {
@@ -28,6 +27,10 @@ function layerForPrimitive(id: string): LayerName {
   return "reliability";
 }
 
+/**
+ * Activate a non-model primitive during session setup.
+ * Model primitives are handled by the turn loop, not here.
+ */
 export async function activatePrimitive(
   ref: PrimitiveRef,
   ctx: ActivateContext,
@@ -47,17 +50,9 @@ export async function activatePrimitive(
 
   try {
     if (ref.primitive.startsWith("model/")) {
-      const provider = getModelProvider(ref);
-      if (!provider) throw new Error(`Unknown model provider: ${ref.primitive}`);
-      const cwd = ctx.runtime.worktreePath ?? ctx.projectRoot;
-      const result = await provider.complete({
-        goal: ctx.goal,
-        messages: [{ role: "user", content: ctx.goal }],
-        config: { ...ref.config, cwd },
-      });
-      detail = result.simulated
-        ? `${result.content}`
-        : `${result.content.slice(0, 200)}…`;
+      ctx.runtime.modelPrimitive = ref.primitive;
+      ctx.runtime.modelConfig = ref.config;
+      detail = `Model provider registered: ${ref.primitive}`;
     } else if (ref.primitive === "context/state-file") {
       const statePath = path.join(ctx.projectRoot, ".foundry", "state", "STATE.md");
       try {
@@ -67,14 +62,15 @@ export async function activatePrimitive(
         detail = "No STATE.md yet";
       }
     } else if (ref.primitive === "tools/git-worktree-write") {
+      ctx.runtime.writeEnabled = true;
       if (!(await isGitRepo(ctx.projectRoot))) {
-        detail = "Not a git repository — skipping worktree (read-only mode)";
+        detail = "Write tools enabled (no git repo — worktree skipped)";
       } else {
         const worktree = await createSessionWorktree(ctx.projectRoot, ctx.sessionId);
         if (!worktree) throw new Error("Failed to create session worktree");
         ctx.runtime.worktreePath = worktree.path;
         ctx.runtime.worktreeBranch = worktree.branch;
-        detail = `Worktree ${worktree.branch} at ${worktree.path}`;
+        detail = `Write tools + worktree ${worktree.branch} at ${worktree.path}`;
       }
     } else if (ref.primitive === "sandbox/worktree-isolated") {
       if (ctx.runtime.worktreePath) {
@@ -93,9 +89,8 @@ export async function activatePrimitive(
         detail = "No git repo — sandbox runs in project root (non-isolated)";
       }
     } else if (ref.primitive.startsWith("tools/")) {
-      const mcp = new McpClient();
-      const tools = await mcp.listTools();
-      detail = `Tools available: ${tools.map((t) => t.name).join(", ")}`;
+      ctx.runtime.writeEnabled = true;
+      detail = "Write tools enabled for session";
     } else if (ref.primitive === "recovery/revert-on-test-fail") {
       ctx.runtime.recoveryArmed.add(ref.primitive);
       ctx.runtime.testCommand ??= (await resolveTestCommand(ctx.projectRoot)) ?? "npm test";
@@ -103,8 +98,15 @@ export async function activatePrimitive(
     } else if (ref.primitive === "recovery/narrow-scope") {
       ctx.runtime.recoveryArmed.add(ref.primitive);
       detail = "Recovery armed (narrow scope on failure)";
-    } else if (ref.primitive === "control/token-budget-100k") {
-      detail = "Token budget 100k active";
+    } else if (ref.primitive.startsWith("control/token-budget")) {
+      const budget = parseBudgetConfig(ref.config);
+      ctx.runtime.maxTokens = budget.maxTokens;
+      ctx.runtime.maxToolCalls = budget.maxToolCalls;
+      detail = `Token budget ${budget.maxTokens}, tool-call budget ${budget.maxToolCalls}`;
+    } else if (ref.primitive === "observability/span-per-turn") {
+      detail = "Per-turn span tracing active";
+    } else if (ref.primitive === "emit/outerloop-evidence") {
+      detail = "outerloop evidence emission armed";
     } else {
       detail = `Primitive ${ref.primitive} ready`;
     }

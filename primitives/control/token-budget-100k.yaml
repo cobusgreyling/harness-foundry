@@ -1,5 +1,6 @@
 id: control/token-budget-100k
 layer: execution
-description: Hard token budget per session
+description: Hard token and tool-call budget per session
 defaults:
   maxTokens: 100000
+  maxToolCalls: 50

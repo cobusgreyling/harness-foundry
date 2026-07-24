@@ -168,7 +168,7 @@ jobs:
 
 ## Status
 
-**v0.4.0** — Implementer execution, host adapters, npm publish. Phases v0.1–v0.3 complete.
+**v0.4.x** — Real turn loop (model → tools → budget), implementer execution, host adapters, npm publish.
 
 → [CHANGELOG.md](./CHANGELOG.md) · [ROADMAP.md](./ROADMAP.md)
 
