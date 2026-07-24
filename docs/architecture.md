@@ -22,10 +22,19 @@ flowchart TB
 
   Stack[stack.yaml] --> Compose[compose]
   Compose --> Runtime[runtime]
-  Runtime --> Trace[trace.jsonl]
+  Runtime --> TurnLoop[model ↔ tools ↔ budget]
+  TurnLoop --> Trace[trace.jsonl]
   Trace --> Evolve[evolve]
   Runtime --> Emit[emit → EvidencePackage]
 ```
+
+## Turn loop
+
+1. **Setup** — activate context, tools/worktree, sandbox, budgets, recovery
+2. **Loop** — model complete → optional tool calls → observations → budget check
+3. **Stop** — no tools / end reason, max turns, or budget exceeded
+4. **Verify + recover** — test command when write tools + recovery armed
+5. **Emit** — optional outerloop evidence
 
 ## Packages
 

@@ -12,6 +12,7 @@ import {
 import { foundryDir, hooksDir, stackPath } from "@cobusgreyling/harness-foundry-core";
 import { readTraceEvents } from "@cobusgreyling/harness-foundry-trace";
 import { runSession } from "./session.js";
+import type { HarnessStack } from "@cobusgreyling/harness-foundry-core";
 
 const tmpDirs: string[] = [];
 
@@ -50,11 +51,47 @@ describe("session integration", () => {
     expect(result.manifest.status).toBe("completed");
     const events = await readTraceEvents(result.manifest.tracePath);
     expect(events.some((e) => e.type === "primitive.activate")).toBe(true);
+    expect(events.some((e) => e.type === "model.complete")).toBe(true);
     expect(events.some((e) => e.type === "session.end")).toBe(true);
 
     const lock = JSON.parse(
       await fs.readFile(path.join(dir, ".foundry", "stack.lock"), "utf8"),
     );
     expect(lock.entries.length).toBeGreaterThan(0);
+  });
+
+  it("tool loop writes files for implement goals", async () => {
+    const dir = await fs.mkdtemp(path.join(os.tmpdir(), "foundry-e2e-"));
+    tmpDirs.push(dir);
+
+    await scaffoldProject(dir);
+    const stack: HarnessStack = {
+      ...minimalStack("e2e-write"),
+      layers: {
+        ...minimalStack("e2e-write").layers,
+        composition: [
+          { primitive: "context/state-file" },
+          { primitive: "tools/git-worktree-write" },
+        ],
+      },
+    };
+    await saveStackToFile(stack, stackPath(dir));
+    const catalog = await loadMergedCatalog(dir);
+    await writeStackLock(dir, stack, catalog);
+
+    const result = await runSession({
+      projectRoot: dir,
+      goal: "Implement a note file path: notes/from-session.md",
+      turns: 3,
+    });
+
+    expect(["completed", "recovered"]).toContain(result.manifest.status);
+    const events = await readTraceEvents(result.manifest.tracePath);
+    expect(events.some((e) => e.type === "tool.call")).toBe(true);
+    expect(events.some((e) => e.type === "tool.result")).toBe(true);
+
+    // Without git, write goes to project root
+    const written = await fs.readFile(path.join(dir, "notes/from-session.md"), "utf8");
+    expect(written).toContain("Mock implementer note");
   });
 });
