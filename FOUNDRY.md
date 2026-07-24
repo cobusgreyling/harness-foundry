@@ -8,7 +8,9 @@
 | L2 | Proposal | Stack diffs suggested; human approves apply |
 | L3 | Auto-tune | Approved primitives auto-adjust within guardrails |
 
-**v0.2+** ships L1 reports and L2 proposals. L3 auto-tune is not implemented yet.
+**v0.2+** ships L1 reports and L2 proposals. Multi-session L2 and gated apply land in v0.4–v0.7. L3 auto-tune is opt-in only (v0.8+), default off.
+
+→ Full platform sequence: [docs/platform-roadmap.md](./docs/platform-roadmap.md).
 
 ## Human gates
 

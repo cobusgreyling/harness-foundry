@@ -169,7 +169,9 @@ jobs:
 
 **v0.4.x** — Real turn loop (model → tools → budget), implementer execution, host adapters, npm publish.
 
-→ [CHANGELOG.md](./CHANGELOG.md) · [ROADMAP.md](./ROADMAP.md)
+**Platform plan (six pillars → v1):** catalogue → registry → evolve → fleet → observe → bench.
+
+→ [CHANGELOG.md](./CHANGELOG.md) · [ROADMAP.md](./ROADMAP.md) · [Platform roadmap](./docs/platform-roadmap.md)
 
 ## Development
 
