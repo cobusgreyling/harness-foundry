@@ -17,7 +17,7 @@ foundry validate && foundry run --goal "Hello harness"
 [![CI](https://github.com/cobusgreyling/harness-foundry/actions/workflows/ci.yml/badge.svg)](https://github.com/cobusgreyling/harness-foundry/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](../LICENSE)
 
-→ [QUICKSTART](../QUICKSTART.md) · [README](../README.md) · [Contributing](../CONTRIBUTING.md)
+→ [QUICKSTART](../QUICKSTART.md) · [README](../README.md) · [Platform roadmap](./platform-roadmap.md) · [Contributing](../CONTRIBUTING.md)
 
 ---
 
