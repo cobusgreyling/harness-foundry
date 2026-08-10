@@ -1,6 +1,10 @@
 # Launch kit — harness-foundry
 
-Ready-to-post copy for Show HN, X, and LinkedIn.  
+Ready-to-post copy for Show HN, X, and LinkedIn.
+
+**Official launch discussion (Q&A hub):**  
+https://github.com/cobusgreyling/harness-foundry/discussions/16
+  
 Repo: https://github.com/cobusgreyling/harness-foundry  
 npm: `npx @cobusgreyling/harness-foundry init --from minimal`
 
