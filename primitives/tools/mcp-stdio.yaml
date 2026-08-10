@@ -1,0 +1,7 @@
+id: tools/mcp-stdio
+layer: composition
+description: Connect an MCP server over stdio and expose its tools to the turn loop
+defaults:
+  serverCommand: null
+  serverArgs: []
+  timeoutMs: 30000

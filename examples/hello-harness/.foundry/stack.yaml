@@ -1,0 +1,15 @@
+name: hello-harness
+version: 1.0.0
+description: Runnable minimal example (mock model + tool loop)
+layers:
+  interface:
+    - primitive: model/mock
+  composition:
+    - primitive: context/state-file
+  execution:
+    - primitive: control/token-budget-100k
+    - primitive: control/tool-call-cap
+      config:
+        maxToolCalls: 10
+  reliability:
+    - primitive: observability/span-per-turn

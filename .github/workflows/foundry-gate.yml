@@ -8,11 +8,23 @@ on:
         required: false
         type: string
         default: .
+      run-session:
+        description: Run a dry smoke session after validate
+        required: false
+        type: boolean
+        default: true
+      frozen-lock:
+        description: Fail if stack.lock is missing when stack.yaml exists
+        required: false
+        type: boolean
+        default: false
   pull_request:
     paths:
       - ".foundry/**"
       - "stacks/**"
       - "primitives/**"
+      - "examples/**"
+      - "packages/**"
 
 jobs:
   gate:
@@ -35,8 +47,33 @@ jobs:
       - name: Validate harness stack
         working-directory: ${{ github.event_name == 'workflow_call' && inputs.project-root || '.' }}
         run: |
+          ROOT="."
           if [ -f .foundry/stack.yaml ]; then
-            node packages/cli/dist/cli.js validate
+            node "${{ github.workspace }}/packages/cli/dist/cli.js" validate
+            if [ "${{ github.event_name == 'workflow_call' && inputs.frozen-lock || false }}" = "true" ]; then
+              test -f .foundry/stack.lock || { echo "stack.lock missing (--frozen-lock)"; exit 1; }
+            fi
           else
             echo "No .foundry/stack.yaml — skipping validate"
           fi
+
+      - name: Smoke session (mock)
+        if: ${{ github.event_name != 'workflow_call' || inputs.run-session }}
+        working-directory: ${{ github.event_name == 'workflow_call' && inputs.project-root || 'examples/hello-harness' }}
+        run: |
+          if [ -f .foundry/stack.yaml ]; then
+            node "${{ github.workspace }}/packages/cli/dist/cli.js" run \
+              --goal "list the directory" --turns 4 --host standalone
+          else
+            echo "No stack — skip session"
+          fi
+
+      - name: Example fixtures validate
+        if: github.event_name != 'workflow_call'
+        run: |
+          for d in examples/hello-harness examples/with-outerloop examples/mcp-filesystem; do
+            if [ -f "$d/.foundry/stack.yaml" ]; then
+              echo "== $d =="
+              (cd "$d" && node ../../packages/cli/dist/cli.js validate)
+            fi
+          done

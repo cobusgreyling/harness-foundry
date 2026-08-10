@@ -1,0 +1,22 @@
+name: triage
+version: 1.0.0
+description: Lightweight triage / classification loop
+layers:
+  interface:
+    - primitive: model/openai-compatible
+      config:
+        model: gpt-4o-mini
+  composition:
+    - primitive: context/state-file
+    - primitive: context/agents-md
+  execution:
+    - primitive: control/token-budget-100k
+      config:
+        maxTokens: 50000
+        maxToolCalls: 10
+    - primitive: control/tool-call-cap
+      config:
+        maxToolCalls: 10
+  reliability:
+    - primitive: observability/span-per-turn
+    - primitive: emit/outerloop-evidence

@@ -18,6 +18,8 @@ export type InitOptions = {
   from?: StackPreset | string;
   withCursor?: boolean;
   withClaudeCode?: boolean;
+  /** Preview paths only; write nothing. */
+  dryRun?: boolean;
 };
 
 export type InitResult = {
@@ -45,22 +47,42 @@ export async function initProject(cwd: string, options: InitOptions = {}): Promi
     path.join(foundryDir(cwd), "primitives"),
     path.join(foundryDir(cwd), "evolve", "reports"),
     path.join(foundryDir(cwd), "evolve", "proposals"),
+    path.join(foundryDir(cwd), "evolve", "applied"),
     hooksDir(cwd),
   ];
+
+  const stackFile = stackPath(cwd);
+  const hookFile = path.join(hooksDir(cwd), "outerloop.yaml");
+  const stateFile = path.join(foundryDir(cwd), "state", "STATE.md");
+  const lockFile = path.join(foundryDir(cwd), "stack.lock");
+
+  if (options.dryRun) {
+    filesWritten.push(stackFile, lockFile, hookFile, stateFile);
+    if (options.withCursor) {
+      filesWritten.push(
+        path.join(cwd, ".cursor", "rules", "harness-foundry.mdc"),
+        path.join(cwd, ".cursor", "hooks", "foundry-post-run.sh"),
+      );
+      integrations.push("cursor");
+    }
+    if (options.withClaudeCode) {
+      filesWritten.push(path.join(cwd, ".claude", "harness-foundry.md"));
+      integrations.push("claude-code");
+    }
+    return { projectRoot: cwd, stackName, preset, filesWritten, integrations };
+  }
 
   for (const dir of dirs) {
     await fs.mkdir(dir, { recursive: true });
   }
 
-  const stackFile = stackPath(cwd);
   await saveStackToFile(stack, stackFile);
   filesWritten.push(stackFile);
 
   const catalog = await loadMergedCatalog(cwd);
-  const lockFile = await writeStackLock(cwd, stack, catalog);
-  filesWritten.push(lockFile);
+  const writtenLock = await writeStackLock(cwd, stack, catalog);
+  filesWritten.push(writtenLock);
 
-  const hookFile = path.join(hooksDir(cwd), "outerloop.yaml");
   await fs.writeFile(
     hookFile,
     YAML.stringify({
@@ -72,7 +94,6 @@ export async function initProject(cwd: string, options: InitOptions = {}): Promi
   );
   filesWritten.push(hookFile);
 
-  const stateFile = path.join(foundryDir(cwd), "state", "STATE.md");
   await fs.mkdir(path.dirname(stateFile), { recursive: true });
   await fs.writeFile(
     stateFile,

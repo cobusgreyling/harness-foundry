@@ -1,0 +1,4 @@
+id: context/agents-md
+layer: composition
+description: Load project AGENTS.md into the session context (if present)
+defaults: {}

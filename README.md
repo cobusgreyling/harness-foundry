@@ -106,7 +106,9 @@ L2 proposal written — Human gate: review before applying to stack.yaml
 
 </details>
 
-→ [QUICKSTART.md](./QUICKSTART.md)
+→ [QUICKSTART.md](QUICKSTART.md) · [Windows](QUICKSTART.windows.md)
+
+→ also(./QUICKSTART.md)
 
 ## Choose your stack
 
@@ -168,9 +170,11 @@ jobs:
 
 ## Status
 
-**v0.4.0** — Implementer execution, host adapters, npm publish. Phases v0.1–v0.3 complete.
+**v0.4.x** — Real turn loop (model → tools → budget), implementer execution, host adapters, npm publish.
 
-→ [CHANGELOG.md](./CHANGELOG.md) · [ROADMAP.md](./ROADMAP.md)
+**Platform plan (six pillars → v1):** catalogue → registry → evolve → fleet → observe → bench.
+
+→ [CHANGELOG.md](./CHANGELOG.md) · [ROADMAP.md](./ROADMAP.md) · [Platform roadmap](./docs/platform-roadmap.md)
 
 ## Development
 

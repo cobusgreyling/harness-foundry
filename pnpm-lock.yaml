@@ -129,12 +129,18 @@ importers:
 
   packages/evolve:
     dependencies:
+      '@cobusgreyling/harness-foundry-compose':
+        specifier: workspace:*
+        version: link:../compose
       '@cobusgreyling/harness-foundry-core':
         specifier: workspace:*
         version: link:../core
       '@cobusgreyling/harness-foundry-trace':
         specifier: workspace:*
         version: link:../trace
+      yaml:
+        specifier: ^2.8.0
+        version: 2.9.0
     devDependencies:
       '@types/node':
         specifier: ^26.0.0

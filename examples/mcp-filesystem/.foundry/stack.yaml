@@ -1,0 +1,16 @@
+name: mcp-filesystem
+version: 1.0.0
+description: MCP stdio stub mode (set serverCommand for a real server)
+layers:
+  interface:
+    - primitive: model/mock
+  composition:
+    - primitive: context/state-file
+    - primitive: tools/mcp-stdio
+  execution:
+    - primitive: control/token-budget-100k
+    - primitive: control/tool-call-cap
+      config:
+        maxToolCalls: 15
+  reliability:
+    - primitive: observability/span-per-turn

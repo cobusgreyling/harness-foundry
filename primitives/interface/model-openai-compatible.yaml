@@ -1,0 +1,7 @@
+id: model/openai-compatible
+layer: interface
+description: Any OpenAI-compatible endpoint (Azure, local gateways); set baseUrl + apiKey
+defaults:
+  model: gpt-4o-mini
+  baseUrl: https://api.openai.com/v1
+  maxTokens: 1024

@@ -25,9 +25,10 @@ describe("resolveStackPreset", () => {
   it("maps loop-engineering aliases", () => {
     expect(resolveStackPreset("minimal")).toBe("minimal");
     expect(resolveStackPreset("implementer")).toBe("implementer");
-    expect(resolveStackPreset("daily-triage")).toBe("minimal");
+    expect(resolveStackPreset("daily-triage")).toBe("triage");
+    expect(resolveStackPreset("reviewer")).toBe("reviewer");
     expect(resolveStackPreset("loop-engineering:ci-sweeper")).toBe("implementer");
-    expect(resolveStackPreset("loop-engineering:daily-triage")).toBe("minimal");
+    expect(resolveStackPreset("loop-engineering:daily-triage")).toBe("triage");
     expect(resolveStackPreset("unknown-pattern")).toBe("minimal");
   });
 });

@@ -26,7 +26,7 @@ $CLI primitives list | head -12
 
 echo ""
 echo "=== 5. Run session ==="
-OUTPUT=$($CLI run --goal "Demo harness session" 2>&1)
+OUTPUT=$($CLI run --goal "list the directory" --turns 4 --host standalone 2>&1)
 echo "$OUTPUT"
 
 SESSION_ID=$(echo "$OUTPUT" | sed -n 's/.*ID: //p' | head -1)
@@ -50,6 +50,11 @@ $CLI evolve report --session "$SESSION_ID"
 echo ""
 echo "=== 9. Evolve proposal (L2) ==="
 $CLI evolve proposal --session "$SESSION_ID"
+
+echo ""
+echo ""
+echo "=== 10. Evolve apply (human gate demo — requires --yes) ==="
+$CLI evolve apply --proposal nonexistent 2>&1 | head -5 || true
 
 echo ""
 echo "Demo complete. Artifacts in $DEMO_DIR/.foundry/"
