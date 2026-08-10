@@ -15,6 +15,7 @@ import {
   stackPath,
 } from "@cobusgreyling/harness-foundry-core";
 import {
+  applyEvolveProposal,
   generateEvolveProposal,
   generateEvolveReport,
 } from "@cobusgreyling/harness-foundry-evolve";
@@ -33,7 +34,7 @@ const program = new Command();
 program
   .name("foundry")
   .description("Composable harness runtime for production agents")
-  .version("0.4.0");
+  .version("0.5.0");
 
 program
   .command("init")
@@ -41,13 +42,34 @@ program
   .option("--name <name>", "Harness stack name (default: directory name)")
   .option(
     "--from <preset>",
-    "Stack preset or loop-engineering pattern (minimal | implementer | daily-triage | loop-engineering:ci-sweeper | …)",
+    "Stack preset or loop-engineering pattern (minimal | implementer | reviewer | triage | daily-triage | …)",
     "minimal",
   )
+  .option("--dry-run", "Preview files that would be written without creating them")
   .option("--with-cursor", "Install Cursor rules and post-run hook")
   .option("--with-claude-code", "Install Claude Code helpers and post-run hook")
-  .action(async (options: { name?: string; from: string; withCursor?: boolean; withClaudeCode?: boolean }) => {
+  .action(async (options: {
+    name?: string;
+    from: string;
+    dryRun?: boolean;
+    withCursor?: boolean;
+    withClaudeCode?: boolean;
+  }) => {
     const cwd = process.cwd();
+    if (options.dryRun) {
+      const result = await initProject(cwd, {
+        name: options.name,
+        from: options.from,
+        withCursor: options.withCursor,
+        withClaudeCode: options.withClaudeCode,
+        dryRun: true,
+      });
+      console.log(chalk.yellow(`Dry-run: would initialize "${result.stackName}" (${result.preset})`));
+      for (const file of result.filesWritten) {
+        console.log(chalk.dim(`  ${file}`));
+      }
+      return;
+    }
     const result = await initProject(cwd, {
       name: options.name,
       from: options.from,
@@ -138,6 +160,28 @@ primitives
     console.log(chalk.dim(`\n${entries.length} primitive(s)`));
   });
 
+primitives
+  .command("show")
+  .description("Show a single primitive definition")
+  .argument("<id>", "Primitive id (e.g. control/tool-call-cap)")
+  .action(async (id: string) => {
+    const cwd = process.cwd();
+    const catalog = await loadMergedCatalog(cwd);
+    const entry = catalog.get(id);
+    if (!entry) {
+      console.error(chalk.red(`Unknown primitive: ${id}`));
+      process.exitCode = 1;
+      return;
+    }
+    console.log(chalk.bold(entry.id));
+    console.log(chalk.cyan(`layer: ${entry.layer}`));
+    console.log(entry.description);
+    if (entry.defaults && Object.keys(entry.defaults).length > 0) {
+      console.log(chalk.dim("defaults:"));
+      console.log(JSON.stringify(entry.defaults, null, 2));
+    }
+  });
+
 const sessions = program.command("sessions").description("Session history");
 
 sessions
@@ -172,7 +216,7 @@ program
   .command("run")
   .description("Run a harness session against the active stack")
   .option("--goal <goal>", "Session goal")
-  .option("--turns <n>", "Number of turns", "1")
+  .option("--turns <n>", "Max model↔tool turns (default 8)", "8")
   .option("--host <host>", "Host adapter: auto | cursor | claude-code | standalone", "auto")
   .option("--dry-run", "Record session lifecycle without activating primitives")
   .action(async (options: { goal?: string; turns: string; host: string; dryRun?: boolean }) => {
@@ -310,15 +354,48 @@ evolve
     const traceFile = path.join(cwd, ".foundry", "sessions", options.session, "trace.jsonl");
     try {
       const stack = await loadStackFromFile(stackPath(cwd));
-      const { report, proposalPath } = await generateEvolveProposal({
+      const { report, proposalPath, proposalId } = await generateEvolveProposal({
         projectRoot: cwd,
         sessionId: options.session,
         tracePath: traceFile,
         stack,
       });
       console.log(chalk.green(`L2 proposal written (report ${report.id})`));
+      console.log(chalk.dim(`  id: ${proposalId}`));
       console.log(chalk.dim(`  ${proposalPath}`));
-      console.log(chalk.yellow("Human gate: review before applying to stack.yaml"));
+      console.log(
+        chalk.yellow("Human gate: review, then foundry evolve apply --proposal <id> --yes"),
+      );
+    } catch (error) {
+      console.error(chalk.red(error instanceof Error ? error.message : String(error)));
+      process.exitCode = 1;
+    }
+  });
+
+evolve
+  .command("apply")
+  .description("Apply an L2 proposal to stack.yaml (requires --yes human gate)")
+  .requiredOption("--proposal <idOrPath>", "Proposal UUID or path to .yaml")
+  .option("--yes", "Confirm human review complete (required)")
+  .action(async (options: { proposal: string; yes?: boolean }) => {
+    const cwd = process.cwd();
+    try {
+      const result = await applyEvolveProposal({
+        projectRoot: cwd,
+        proposal: options.proposal,
+        yes: Boolean(options.yes),
+      });
+      console.log(chalk.green(`Applied proposal ${result.proposalId}`));
+      console.log(chalk.dim(`  stack: ${result.stackPath}`));
+      console.log(chalk.dim(`  audit: ${result.auditPath}`));
+      if (result.added.length) {
+        console.log(chalk.cyan("  added:"));
+        for (const a of result.added) console.log(chalk.cyan(`    + ${a.primitive}`));
+      }
+      if (result.skipped.length) {
+        console.log(chalk.dim("  skipped (already present):"));
+        for (const s of result.skipped) console.log(chalk.dim(`    · ${s.primitive}`));
+      }
     } catch (error) {
       console.error(chalk.red(error instanceof Error ? error.message : String(error)));
       process.exitCode = 1;

@@ -1,0 +1,8 @@
+{
+  "name": "hello-harness-example",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "demo": "node ../../packages/cli/dist/cli.js run --goal \"list the directory\" --turns 4 --host standalone"
+  }
+}

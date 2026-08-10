@@ -28,5 +28,12 @@ temp/
 
 # Runtime data (local dev)
 .foundry/sessions/
+.foundry/evolve/
+
+# Examples: keep stack fixtures, ignore runtime artifacts
 !examples/**/.foundry/
+examples/**/.foundry/sessions/
+examples/**/.foundry/evolve/
+examples/**/.foundry/stack.lock
+examples/**/.outerloop/
 examples/**/.demo-run/

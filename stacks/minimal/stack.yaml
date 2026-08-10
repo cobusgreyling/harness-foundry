@@ -8,6 +8,9 @@ layers:
     - primitive: context/state-file
   execution:
     - primitive: control/token-budget-100k
+    - primitive: control/tool-call-cap
+      config:
+        maxToolCalls: 20
     - primitive: sandbox/worktree-isolated
   reliability:
     - primitive: observability/span-per-turn

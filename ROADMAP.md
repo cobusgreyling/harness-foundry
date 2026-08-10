@@ -46,17 +46,28 @@ loop-engineering  →  harness-foundry  →  outerloop
 - [x] Enforce token + tool-call budgets from `control/token-budget-*`
 - [x] Tool-aware mock + Anthropic providers (`tool_use` / tool results)
 - [x] Trace events: `model.complete`, `tool.call`, `tool.result`, `budget.*`
-- [ ] Land turn-loop work on `main` + green CI / demo
-- [ ] OpenAI (+ OpenAI-compatible) model adapter
-- [ ] Real MCP stdio transport
-- [ ] Wire MCP tools into the turn loop when stack requests them
-- [ ] `foundry evolve apply` (explicit human gate / `--yes` + audit)
+- [x] Land turn-loop work on `main` + green CI / demo
+- [x] OpenAI (+ OpenAI-compatible) model adapter
+- [x] Real MCP stdio transport
+- [x] Wire MCP tools into the turn loop when stack requests them
+- [x] `foundry evolve apply` (explicit human gate / `--yes` + audit)
 
 **Ship:** npm `0.4.x`, updated QUICKSTART, demo with tool loop.
 
 ---
 
-## v0.5 — Catalogue + composition
+## v0.5.0 ✅ (2026-08-10 production sprint)
+
+- [x] Turn loop + budgets on main path
+- [x] OpenAI / OpenAI-compatible
+- [x] MCP stdio + tools in loop
+- [x] evolve apply --yes + audit
+- [x] Richer L1 reports, trace docs, primitive plugin API
+- [x] reviewer/triage stacks, runnable examples, Windows QUICKSTART
+- [x] Expanded foundry-gate + demo:examples
+
+## v0.5.x — Catalogue + composition (remaining)
+
 
 **Pillars:** 4 (composition), foundation for 1 (registry).
 

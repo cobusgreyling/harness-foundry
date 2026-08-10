@@ -106,7 +106,9 @@ L2 proposal written — Human gate: review before applying to stack.yaml
 
 </details>
 
-→ [QUICKSTART.md](./QUICKSTART.md)
+→ [QUICKSTART.md](QUICKSTART.md) · [Windows](QUICKSTART.windows.md)
+
+→ also(./QUICKSTART.md)
 
 ## Choose your stack
 

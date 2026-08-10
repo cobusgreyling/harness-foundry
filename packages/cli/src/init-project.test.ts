@@ -36,7 +36,7 @@ describe("initProject", () => {
       name: "triage",
       from: "loop-engineering:daily-triage",
     });
-    expect(reportOnly.preset).toBe("minimal");
+    expect(reportOnly.preset).toBe("triage");
 
     const dir2 = await fs.mkdtemp(path.join(os.tmpdir(), "foundry-init-le2-"));
     tmpDirs.push(dir2);

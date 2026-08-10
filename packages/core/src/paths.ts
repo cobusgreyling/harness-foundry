@@ -38,6 +38,10 @@ export function evolveProposalsDir(projectRoot: string): string {
   return path.join(foundryDir(projectRoot), "evolve", "proposals");
 }
 
+export function evolveAppliedDir(projectRoot: string): string {
+  return path.join(foundryDir(projectRoot), "evolve", "applied");
+}
+
 export function hooksDir(projectRoot: string): string {
   return path.join(foundryDir(projectRoot), "hooks");
 }

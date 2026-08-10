@@ -23,4 +23,5 @@ jobs:
       - run: pnpm test
       - run: pnpm lint
       - run: pnpm demo
+      - run: pnpm demo:examples
       - run: bash scripts/smoke-test-published.sh

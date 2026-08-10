@@ -8,7 +8,12 @@ import type { PrimitiveRef } from "@cobusgreyling/harness-foundry-core";
 import type { TraceRecorder } from "@cobusgreyling/harness-foundry-trace";
 import { applyTokenUsage, applyToolCalls, checkBudget } from "./budget.js";
 import type { SessionRuntime } from "./runtime-state.js";
-import { executeToolCall, listBuiltinTools } from "./tools.js";
+import {
+  executeToolCall,
+  listBuiltinTools,
+  loadMcpToolDefinitions,
+  mergeToolDefinitions,
+} from "./tools.js";
 
 export type TurnLoopContext = {
   projectRoot: string;
@@ -48,11 +53,35 @@ function resolveProvider(ref: PrimitiveRef): ModelProvider {
   return provider;
 }
 
+async function resolveTools(ctx: TurnLoopContext): Promise<ToolDefinition[]> {
+  const builtin = listBuiltinTools({ writeEnabled: ctx.runtime.writeEnabled });
+  if (!ctx.runtime.mcpClient) return builtin;
+
+  try {
+    const mcpDefs = await loadMcpToolDefinitions(ctx.runtime.mcpClient);
+    ctx.runtime.mcpToolNames = new Set(
+      mcpDefs.map((t) => (builtin.some((b) => b.name === t.name) ? `mcp__${t.name}` : t.name)),
+    );
+    // Also track bare MCP names for dispatch
+    for (const t of mcpDefs) {
+      ctx.runtime.mcpToolNames.add(t.name);
+    }
+    return mergeToolDefinitions(builtin, mcpDefs);
+  } catch (error) {
+    await ctx.recorder.record({
+      sessionId: ctx.sessionId,
+      type: "error",
+      layer: "composition",
+      primitive: "tools/mcp-stdio",
+      detail: error instanceof Error ? error.message : String(error),
+    });
+    return builtin;
+  }
+}
+
 export async function runTurnLoop(ctx: TurnLoopContext): Promise<TurnLoopResult> {
   const provider = resolveProvider(ctx.modelRef);
-  const tools: ToolDefinition[] = listBuiltinTools({
-    writeEnabled: ctx.runtime.writeEnabled,
-  });
+  const tools = await resolveTools(ctx);
 
   const messages: ModelMessage[] = [
     { role: "system", content: buildSystemPrompt(ctx) },

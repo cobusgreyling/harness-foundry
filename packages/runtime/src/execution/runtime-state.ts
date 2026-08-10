@@ -1,3 +1,5 @@
+import type { McpClient } from "@cobusgreyling/harness-foundry-mcp";
+
 export type SessionRuntime = {
   worktreePath?: string;
   worktreeBranch?: string;
@@ -19,6 +21,10 @@ export type SessionRuntime = {
   /** Model primitive id when resolved. */
   modelPrimitive?: string;
   modelConfig?: Record<string, unknown>;
+  /** Optional live MCP client for tools/mcp-* primitives. */
+  mcpClient?: McpClient;
+  /** Tool names exposed by the connected MCP server. */
+  mcpToolNames?: Set<string>;
 };
 
 export function createSessionRuntime(host?: SessionRuntime["host"]): SessionRuntime {

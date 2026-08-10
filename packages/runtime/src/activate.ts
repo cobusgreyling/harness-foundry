@@ -1,8 +1,9 @@
 import fs from "node:fs/promises";
 import path from "node:path";
+import { getModelProvider } from "@cobusgreyling/harness-foundry-interface";
+import { McpClient } from "@cobusgreyling/harness-foundry-mcp";
 import type { LayerName, PrimitiveRef } from "@cobusgreyling/harness-foundry-core";
 import type { TraceRecorder } from "@cobusgreyling/harness-foundry-trace";
-import { parseBudgetConfig } from "./execution/budget.js";
 import type { SessionRuntime } from "./execution/runtime-state.js";
 import { resolveTestCommand } from "./execution/verify.js";
 import {
@@ -10,6 +11,7 @@ import {
   isGitRepo,
   verifyWorktreeIsolation,
 } from "./execution/worktree.js";
+import { tryPrimitiveHandler } from "./plugins.js";
 
 export type ActivateContext = {
   projectRoot: string;
@@ -27,10 +29,13 @@ function layerForPrimitive(id: string): LayerName {
   return "reliability";
 }
 
-/**
- * Activate a non-model primitive during session setup.
- * Model primitives are handled by the turn loop, not here.
- */
+function numConfig(ref: PrimitiveRef, key: string, fallback: number): number {
+  const v = ref.config?.[key];
+  if (typeof v === "number" && Number.isFinite(v)) return v;
+  if (typeof v === "string" && v.trim() !== "" && Number.isFinite(Number(v))) return Number(v);
+  return fallback;
+}
+
 export async function activatePrimitive(
   ref: PrimitiveRef,
   ctx: ActivateContext,
@@ -49,10 +54,16 @@ export async function activatePrimitive(
   let ok = true;
 
   try {
-    if (ref.primitive.startsWith("model/")) {
+    const plugin = await tryPrimitiveHandler(ref, ctx);
+    if (plugin?.handled) {
+      ok = plugin.ok;
+      detail = plugin.detail;
+    } else if (ref.primitive.startsWith("model/")) {
+      const provider = getModelProvider(ref);
+      if (!provider) throw new Error(`Unknown model provider: ${ref.primitive}`);
       ctx.runtime.modelPrimitive = ref.primitive;
-      ctx.runtime.modelConfig = ref.config;
-      detail = `Model provider registered: ${ref.primitive}`;
+      ctx.runtime.modelConfig = { ...ref.config };
+      detail = `Model provider ${ref.primitive} registered (loop will call complete)`;
     } else if (ref.primitive === "context/state-file") {
       const statePath = path.join(ctx.projectRoot, ".foundry", "state", "STATE.md");
       try {
@@ -61,16 +72,55 @@ export async function activatePrimitive(
       } catch {
         detail = "No STATE.md yet";
       }
+    } else if (ref.primitive === "context/agents-md") {
+      const agentsPath = path.join(ctx.projectRoot, "AGENTS.md");
+      try {
+        const text = await fs.readFile(agentsPath, "utf8");
+        detail = `Loaded AGENTS.md (${text.length} chars)`;
+      } catch {
+        detail = "No AGENTS.md — skipped";
+      }
     } else if (ref.primitive === "tools/git-worktree-write") {
       ctx.runtime.writeEnabled = true;
       if (!(await isGitRepo(ctx.projectRoot))) {
-        detail = "Write tools enabled (no git repo — worktree skipped)";
+        detail = "Not a git repository — skipping worktree (read-only mode)";
       } else {
         const worktree = await createSessionWorktree(ctx.projectRoot, ctx.sessionId);
         if (!worktree) throw new Error("Failed to create session worktree");
         ctx.runtime.worktreePath = worktree.path;
         ctx.runtime.worktreeBranch = worktree.branch;
-        detail = `Write tools + worktree ${worktree.branch} at ${worktree.path}`;
+        detail = `Worktree ${worktree.branch} at ${worktree.path}`;
+      }
+    } else if (
+      ref.primitive === "tools/mcp-stdio" ||
+      ref.primitive === "tools/mcp" ||
+      ref.primitive.startsWith("tools/mcp-")
+    ) {
+      const serverCommand =
+        (ref.config?.serverCommand as string | undefined) ??
+        (ref.config?.command as string | undefined);
+      const serverArgs = (ref.config?.serverArgs as string[] | undefined) ??
+        (ref.config?.args as string[] | undefined) ??
+        [];
+      const client = new McpClient({
+        serverCommand,
+        serverArgs,
+        timeoutMs: numConfig(ref, "timeoutMs", 30_000),
+      });
+      if (serverCommand) {
+        await client.connect();
+        const tools = await client.listTools();
+        ctx.runtime.mcpClient = client;
+        ctx.runtime.mcpToolNames = new Set(tools.map((t) => t.name));
+        detail = `MCP stdio connected (${tools.length} tools): ${tools
+          .map((t) => t.name)
+          .slice(0, 12)
+          .join(", ")}`;
+      } else {
+        ctx.runtime.mcpClient = client;
+        const tools = await client.listTools();
+        ctx.runtime.mcpToolNames = new Set(tools.map((t) => t.name));
+        detail = `MCP stub mode (${tools.length} default tools) — set config.serverCommand for real stdio`;
       }
     } else if (ref.primitive === "sandbox/worktree-isolated") {
       if (ctx.runtime.worktreePath) {
@@ -88,9 +138,6 @@ export async function activatePrimitive(
       } else {
         detail = "No git repo — sandbox runs in project root (non-isolated)";
       }
-    } else if (ref.primitive.startsWith("tools/")) {
-      ctx.runtime.writeEnabled = true;
-      detail = "Write tools enabled for session";
     } else if (ref.primitive === "recovery/revert-on-test-fail") {
       ctx.runtime.recoveryArmed.add(ref.primitive);
       ctx.runtime.testCommand ??= (await resolveTestCommand(ctx.projectRoot)) ?? "npm test";
@@ -98,15 +145,23 @@ export async function activatePrimitive(
     } else if (ref.primitive === "recovery/narrow-scope") {
       ctx.runtime.recoveryArmed.add(ref.primitive);
       detail = "Recovery armed (narrow scope on failure)";
-    } else if (ref.primitive.startsWith("control/token-budget")) {
-      const budget = parseBudgetConfig(ref.config);
-      ctx.runtime.maxTokens = budget.maxTokens;
-      ctx.runtime.maxToolCalls = budget.maxToolCalls;
-      detail = `Token budget ${budget.maxTokens}, tool-call budget ${budget.maxToolCalls}`;
-    } else if (ref.primitive === "observability/span-per-turn") {
-      detail = "Per-turn span tracing active";
-    } else if (ref.primitive === "emit/outerloop-evidence") {
-      detail = "outerloop evidence emission armed";
+    } else if (
+      ref.primitive === "control/token-budget-100k" ||
+      ref.primitive.startsWith("control/token-budget")
+    ) {
+      ctx.runtime.maxTokens = numConfig(ref, "maxTokens", 100_000);
+      ctx.runtime.maxToolCalls = numConfig(ref, "maxToolCalls", ctx.runtime.maxToolCalls);
+      detail = `Token budget ${ctx.runtime.maxTokens} / tool-call cap ${ctx.runtime.maxToolCalls}`;
+    } else if (
+      ref.primitive === "control/tool-call-cap" ||
+      ref.primitive.startsWith("control/tool-call-cap")
+    ) {
+      ctx.runtime.maxToolCalls = numConfig(ref, "maxToolCalls", 20);
+      detail = `Tool-call cap set to ${ctx.runtime.maxToolCalls}`;
+    } else if (ref.primitive.startsWith("tools/")) {
+      const mcp = new McpClient();
+      const tools = await mcp.listTools();
+      detail = `Tools available: ${tools.map((t) => t.name).join(", ")}`;
     } else {
       detail = `Primitive ${ref.primitive} ready`;
     }

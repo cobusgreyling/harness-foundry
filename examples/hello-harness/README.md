@@ -1,16 +1,26 @@
 # hello-harness
 
-Minimal example project using harness-foundry.
+Runnable minimal example — **no API keys required**.
+
+## From monorepo root
 
 ```bash
+pnpm build
 cd examples/hello-harness
-npx @cobusgreyling/harness-foundry init --name hello-harness
-foundry run --goal "Smoke test the harness"
+node ../../packages/cli/dist/cli.js validate
+node ../../packages/cli/dist/cli.js run --goal "list the directory" --turns 4 --host standalone
 ```
 
-After a run, inspect the trace and generate an L1 evolution report:
+Inspect the latest session:
 
 ```bash
-foundry trace show --session <id>
-foundry evolve report --session <id>
+node ../../packages/cli/dist/cli.js sessions list
+node ../../packages/cli/dist/cli.js evolve report --session <id>
+```
+
+## From published CLI
+
+```bash
+npx @cobusgreyling/harness-foundry init --from minimal --name hello
+foundry run --goal "list the directory"
 ```

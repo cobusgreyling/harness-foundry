@@ -1,0 +1,6 @@
+id: model/openai
+layer: interface
+description: OpenAI Chat Completions adapter (OPENAI_API_KEY); tool_calls supported
+defaults:
+  model: gpt-4o-mini
+  maxTokens: 1024

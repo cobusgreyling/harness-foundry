@@ -4,18 +4,37 @@ All notable changes to harness-foundry are documented here. Package-level change
 
 ## Unreleased
 
-### Runtime — real agent turn loop
+## v0.5.0 — 2026-08-10
 
-- Session runner uses a true model ↔ tool loop (not sequential primitive pings)
-- Built-in sandboxed tools: `read_file`, `write_file`, `list_dir`, `run_command`
-- Enforced token + tool-call budgets from `control/token-budget-*`
-- Mock + Anthropic providers support tool calls / tool results
-- New trace events: `model.complete`, `tool.call`, `tool.result`, `budget.check`, `budget.exceeded`
+**Production sprint (weeks 1–12): real tool loop, OpenAI, MCP stdio, evolve apply.**
 
-### Ecosystem funnel
+### Runtime (W1–3)
 
-- `foundry init --from` accepts loop-engineering pattern names and `loop-engineering:<pattern>` aliases (e.g. `daily-triage` → minimal, `ci-sweeper` → implementer)
-- Documented LE one-command path: `npx @cobusgreyling/loop-init . --with-foundry`
+- Multi-turn agent loop: model → tools → observe → budget (default 8 turns)
+- Built-in tools: `read_file`, `write_file`, `list_dir`, `run_command` (sandboxed)
+- Enforced token + tool-call budgets (`budget.check` / `budget.exceeded`)
+- OpenAI + OpenAI-compatible model adapters (`model/openai`, `model/openai-compatible`)
+- Real MCP stdio JSON-RPC client; wire into turn loop via `tools/mcp-stdio`
+- Runnable examples: `hello-harness`, `with-outerloop`, `mcp-filesystem`
+
+### Evolution (W4–6)
+
+- `foundry evolve apply --proposal <id> --yes` with audit under `.foundry/evolve/applied/`
+- Richer L1 reports: failure taxonomy, usage, primitive heatmap
+- [docs/trace-events.md](docs/trace-events.md)
+
+### Adoption (W7–9)
+
+- [QUICKSTART.windows.md](QUICKSTART.windows.md)
+- Primitive plugin registry (`registerPrimitiveHandler`)
+- `foundry init --dry-run`, `foundry primitives show`
+- Expanded foundry-gate (session smoke + example fixtures)
+- Stacks: `reviewer`, `triage`; primitives: tool-call-cap, agents-md, mcp-stdio
+
+### Narrative (W10–12)
+
+- SPEC v0.5, case study, implementation plan
+- npm packages **0.5.0**
 
 ## v0.4.0 — 2026-07-16
 

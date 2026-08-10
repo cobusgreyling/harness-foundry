@@ -8,10 +8,14 @@ layers:
         model: claude-sonnet-4-20250514
   composition:
     - primitive: context/state-file
+    - primitive: context/agents-md
     - primitive: tools/git-worktree-write
   execution:
     - primitive: sandbox/worktree-isolated
     - primitive: control/token-budget-100k
+    - primitive: control/tool-call-cap
+      config:
+        maxToolCalls: 40
   reliability:
     - primitive: observability/span-per-turn
     - primitive: recovery/revert-on-test-fail

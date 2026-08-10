@@ -97,7 +97,7 @@ export async function runSession(options: RunSessionOptions): Promise<RunSession
   const {
     projectRoot,
     goal = "Explore and verify project state",
-    turns = 1,
+    turns = 8,
     dryRun = false,
     host = "standalone",
   } = options;
@@ -263,6 +263,14 @@ export async function runSession(options: RunSessionOptions): Promise<RunSession
 
   if (runtime.worktreePath && manifest.status === "completed" && runtime.verificationPassed) {
     await removeSessionWorktree(projectRoot, sessionId, runtime.worktreePath);
+  }
+
+  if (runtime.mcpClient) {
+    try {
+      await runtime.mcpClient.close();
+    } catch {
+      // ignore close errors
+    }
   }
 
   return { manifest, stack };

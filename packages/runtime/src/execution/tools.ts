@@ -3,6 +3,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { promisify } from "node:util";
 import type { ToolCall, ToolDefinition } from "@cobusgreyling/harness-foundry-interface";
+import type { McpClient } from "@cobusgreyling/harness-foundry-mcp";
 import type { SessionRuntime } from "./runtime-state.js";
 
 const execFileAsync = promisify(execFile);
@@ -69,6 +70,39 @@ export function listBuiltinTools(options?: { writeEnabled?: boolean }): ToolDefi
     return BUILTIN_TOOLS.filter((t) => t.name !== "write_file");
   }
   return [...BUILTIN_TOOLS];
+}
+
+/** Merge built-in tools with MCP tools (MCP names are prefixed `mcp__` when they collide). */
+export function mergeToolDefinitions(
+  builtin: ToolDefinition[],
+  mcpTools: ToolDefinition[],
+): ToolDefinition[] {
+  const names = new Set(builtin.map((t) => t.name));
+  const merged = [...builtin];
+  for (const t of mcpTools) {
+    if (names.has(t.name)) {
+      const renamed = { ...t, name: `mcp__${t.name}` };
+      merged.push(renamed);
+      names.add(renamed.name);
+    } else {
+      merged.push(t);
+      names.add(t.name);
+    }
+  }
+  return merged;
+}
+
+export async function loadMcpToolDefinitions(client: McpClient): Promise<ToolDefinition[]> {
+  const tools = await client.listTools();
+  return tools.map((t) => ({
+    name: t.name,
+    description: t.description || `MCP tool ${t.name}`,
+    parameters: t.inputSchema ?? {
+      type: "object",
+      properties: {},
+      additionalProperties: true,
+    },
+  }));
 }
 
 function workspaceRoot(ctx: ToolExecutionContext): string {
@@ -149,7 +183,6 @@ async function runCommandTool(
   const command = String(args.command ?? "").trim();
   if (!command) return { ok: false, output: "run_command requires command" };
 
-  // Soft deny list — block obvious destructive/network patterns
   if (/\brm\s+-rf\s+\/\b|curl\s+|wget\s+|nc\s+|ssh\s+/i.test(command)) {
     return { ok: false, output: "Command blocked by sandbox policy" };
   }
@@ -179,6 +212,24 @@ export async function executeToolCall(
   call: ToolCall,
   ctx: ToolExecutionContext,
 ): Promise<ToolExecutionResult> {
+  const name = call.name.startsWith("mcp__") ? call.name.slice("mcp__".length) : call.name;
+
+  // MCP tools (exact name or de-prefixed)
+  if (ctx.runtime.mcpClient) {
+    const mcpNames = ctx.runtime.mcpToolNames ?? new Set<string>();
+    if (mcpNames.has(name) || call.name.startsWith("mcp__")) {
+      try {
+        const output = await ctx.runtime.mcpClient.callTool(name, call.arguments ?? {});
+        return { ok: true, output };
+      } catch (error) {
+        return {
+          ok: false,
+          output: error instanceof Error ? error.message : String(error),
+        };
+      }
+    }
+  }
+
   switch (call.name) {
     case "read_file":
       return readFileTool(ctx, call.arguments);

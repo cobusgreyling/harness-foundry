@@ -14,7 +14,7 @@
 
 ## Human gates
 
-- No stack auto-apply until `foundry evolve apply` ships (v0.4 roadmap)
+- Stack apply only via `foundry evolve apply --yes` (human gate + audit trail)
 - Evidence emission disabled by default (`hooks/outerloop.yaml`)
 - High-risk primitive changes require explicit review
 

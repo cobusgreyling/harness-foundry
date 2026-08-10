@@ -1,0 +1,17 @@
+name: reviewer
+version: 1.0.0
+description: Read-only review loop (no write tools)
+layers:
+  interface:
+    - primitive: model/mock
+  composition:
+    - primitive: context/state-file
+    - primitive: context/agents-md
+  execution:
+    - primitive: control/token-budget-100k
+    - primitive: control/tool-call-cap
+      config:
+        maxToolCalls: 15
+  reliability:
+    - primitive: observability/span-per-turn
+    - primitive: emit/outerloop-evidence

@@ -1,0 +1,4 @@
+enabled: true
+adapter: outerloop
+emitOn:
+  - session.end

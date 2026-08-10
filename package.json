@@ -17,7 +17,9 @@
     "version:ci": "changeset version && pnpm install --frozen-lockfile",
     "release": "pnpm build && changeset publish",
     "smoke": "bash scripts/smoke-test-published.sh",
-    "contributors:update": "bash scripts/update-contributors.sh"
+    "contributors:update": "bash scripts/update-contributors.sh",
+    "demo:examples": "bash scripts/demo-examples.sh",
+    "demo:hello": "node packages/cli/dist/cli.js run --goal \"list the directory\" --turns 4 --host standalone"
   },
   "keywords": [
     "harness-foundry",

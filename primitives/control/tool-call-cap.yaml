@@ -1,0 +1,5 @@
+id: control/tool-call-cap
+layer: execution
+description: Hard cap on tool invocations per session
+defaults:
+  maxToolCalls: 20
