@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>harness-foundry — Composable harness runtime for production agents</title>
+  <meta name="description" content="Practical, composable harness engineering for production agents. Versioned primitives, session traces, human-gated evolution, outerloop governance." />
+  <meta property="og:title" content="harness-foundry" />
+  <meta property="og:description" content="Composable harness runtime for production agents — primitives, traces, evolution, outerloop governance." />
+  <meta property="og:image" content="https://cobusgreyling.github.io/harness-foundry/social-preview.png" />
+  <meta property="og:url" content="https://cobusgreyling.github.io/harness-foundry/" />
+  <meta property="og:type" content="website" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="harness-foundry" />
+  <meta name="twitter:description" content="The missing runtime layer between model and reliable behaviour." />
+  <meta name="twitter:image" content="https://cobusgreyling.github.io/harness-foundry/social-preview.png" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚙</text></svg>" />
+  <style>
+    :root {
+      --bg: #0b1220;
+      --bg-elevated: #111827;
+      --bg-card: rgba(15, 23, 42, 0.85);
+      --border: rgba(148, 163, 184, 0.16);
+      --border-accent: rgba(56, 189, 248, 0.4);
+      --text: #e8eef9;
+      --muted: #94a3b8;
+      --dim: #64748b;
+      --cyan: #22d3ee;
+      --sky: #38bdf8;
+      --indigo: #818cf8;
+      --radius: 16px;
+      --max: 1080px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: "SF Pro Text", "Segoe UI", system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+    a { color: var(--sky); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .wrap { max-width: var(--max); margin: 0 auto; padding: 0 24px; }
+
+    /* nav */
+    nav {
+      position: sticky; top: 0; z-index: 50;
+      backdrop-filter: blur(12px);
+      background: rgba(11, 18, 32, 0.8);
+      border-bottom: 1px solid var(--border);
+    }
+    nav .inner {
+      max-width: var(--max); margin: 0 auto; padding: 14px 24px;
+      display: flex; align-items: center; justify-content: space-between; gap: 16px;
+    }
+    nav .brand { font-weight: 700; letter-spacing: -0.02em; color: var(--text); text-decoration: none; }
+    nav .brand span { color: var(--cyan); }
+    nav .links { display: flex; gap: 18px; flex-wrap: wrap; align-items: center; font-size: 14px; }
+    nav .links a { color: var(--muted); text-decoration: none; }
+    nav .links a:hover { color: var(--text); }
+    .btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 10px 18px; border-radius: 999px; font-weight: 600; font-size: 14px;
+      text-decoration: none !important; border: 1px solid transparent; transition: 0.15s ease;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, #0ea5e9, #6366f1);
+      color: #fff !important;
+      box-shadow: 0 4px 24px rgba(14, 165, 233, 0.25);
+    }
+    .btn-primary:hover { filter: brightness(1.08); }
+    .btn-ghost {
+      background: transparent; color: var(--text) !important;
+      border-color: var(--border);
+    }
+    .btn-ghost:hover { border-color: var(--border-accent); background: rgba(56, 189, 248, 0.06); }
+
+    /* hero */
+    .hero {
+      position: relative;
+      padding: 48px 0 56px;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: "";
+      position: absolute; inset: 0;
+      background:
+        radial-gradient(ellipse 70% 50% at 20% 20%, rgba(56, 189, 248, 0.16), transparent 55%),
+        radial-gradient(ellipse 60% 45% at 90% 60%, rgba(99, 102, 241, 0.18), transparent 50%);
+      pointer-events: none;
+    }
+    .hero-inner { position: relative; text-align: center; }
+    .badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 8px 16px; border-radius: 999px; margin-bottom: 20px;
+      background: linear-gradient(135deg, rgba(14, 165, 233, 0.15), rgba(99, 102, 241, 0.15));
+      border: 1px solid rgba(125, 211, 252, 0.3);
+      color: #7dd3fc; font-size: 12px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase;
+    }
+    .badge .dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: var(--cyan); box-shadow: 0 0 10px var(--cyan);
+    }
+    .hero h1 {
+      font-size: clamp(2.4rem, 5vw, 3.6rem);
+      font-weight: 700; letter-spacing: -0.03em; line-height: 1.1;
+      background: linear-gradient(180deg, #f8fafc, #cbd5e1);
+      -webkit-background-clip: text; background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .hero .lead {
+      margin: 16px auto 0; max-width: 560px;
+      font-size: 1.2rem; color: var(--muted);
+    }
+    .hero .lead strong { color: #e2e8f0; font-weight: 600; }
+    .hero-art {
+      margin: 32px auto 0; max-width: 920px;
+      border-radius: 20px; overflow: hidden;
+      border: 1px solid var(--border);
+      box-shadow: 0 24px 80px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(56, 189, 248, 0.08);
+    }
+    .hero-art img { display: block; width: 100%; height: auto; }
+    .cta-row {
+      margin-top: 28px; display: flex; flex-wrap: wrap; gap: 12px; justify-content: center;
+    }
+    .badges {
+      margin-top: 20px; display: flex; flex-wrap: wrap; gap: 8px; justify-content: center;
+    }
+    .badges img { height: 20px; }
+
+    /* sections */
+    section { padding: 56px 0; }
+    section.alt {
+      background: linear-gradient(180deg, rgba(17, 24, 39, 0.5), transparent);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+    }
+    .section-label {
+      font-size: 12px; font-weight: 700; letter-spacing: 0.14em;
+      text-transform: uppercase; color: var(--cyan); margin-bottom: 10px;
+    }
+    h2 {
+      font-size: clamp(1.6rem, 3vw, 2rem);
+      letter-spacing: -0.02em; margin-bottom: 12px;
+    }
+    .sub { color: var(--muted); max-width: 640px; margin-bottom: 28px; }
+
+    /* pipeline */
+    .pipeline {
+      display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: center;
+      margin: 28px 0;
+    }
+    .step {
+      min-width: 120px; padding: 16px 18px; border-radius: 14px; text-align: center;
+      background: var(--bg-card); border: 1px solid var(--border);
+    }
+    .step.accent {
+      border-color: var(--border-accent);
+      background: linear-gradient(180deg, rgba(14, 165, 233, 0.14), rgba(15, 23, 42, 0.9));
+    }
+    .step .name { font-weight: 700; font-size: 15px; }
+    .step .meta { font-size: 12px; color: var(--dim); margin-top: 4px; }
+    .step.accent .meta { color: #7dd3fc; }
+    .arrow { color: var(--sky); font-size: 18px; opacity: 0.8; }
+
+    /* cards */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 16px;
+    }
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 22px;
+      transition: border-color 0.15s ease, transform 0.15s ease;
+    }
+    .card:hover { border-color: rgba(56, 189, 248, 0.35); transform: translateY(-2px); }
+    .card .num {
+      font-size: 12px; font-weight: 700; color: var(--cyan);
+      letter-spacing: 0.08em; margin-bottom: 8px;
+    }
+    .card h3 { font-size: 1.1rem; margin-bottom: 8px; letter-spacing: -0.01em; }
+    .card p { color: var(--muted); font-size: 0.95rem; margin-bottom: 14px; }
+    .card pre, .code {
+      background: #0a0f1a;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 14px;
+      font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+      font-size: 12.5px;
+      color: #cbd5e1;
+      overflow-x: auto;
+      line-height: 1.5;
+      white-space: pre-wrap;
+    }
+    .card .link { font-size: 13px; font-weight: 600; }
+
+    /* tables */
+    .table-wrap { overflow-x: auto; border-radius: var(--radius); border: 1px solid var(--border); }
+    table { width: 100%; border-collapse: collapse; font-size: 0.95rem; }
+    th, td { padding: 12px 16px; text-align: left; border-bottom: 1px solid var(--border); }
+    th { background: rgba(15, 23, 42, 0.9); color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; }
+    tr:last-child td { border-bottom: none; }
+    td code, p code, li code {
+      font-family: ui-monospace, "SF Mono", Menlo, monospace;
+      font-size: 0.88em;
+      background: rgba(56, 189, 248, 0.08);
+      border: 1px solid rgba(56, 189, 248, 0.15);
+      padding: 1px 6px; border-radius: 6px; color: #7dd3fc;
+    }
+
+    /* try box */
+    .try {
+      background: linear-gradient(135deg, rgba(14, 165, 233, 0.1), rgba(99, 102, 241, 0.1));
+      border: 1px solid var(--border-accent);
+      border-radius: 20px;
+      padding: 28px;
+    }
+    .try pre {
+      background: #0a0f1a;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 18px 20px;
+      font-family: ui-monospace, "SF Mono", Menlo, monospace;
+      font-size: 13.5px;
+      color: #e2e8f0;
+      overflow-x: auto;
+      line-height: 1.65;
+      margin-top: 16px;
+    }
+    .try pre .comment { color: var(--dim); }
+
+    /* ecosystem */
+    .eco {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+    @media (max-width: 720px) {
+      .eco { grid-template-columns: 1fr; }
+      nav .links .hide-sm { display: none; }
+    }
+    .eco .card { text-align: center; }
+    .eco .card.active {
+      border-color: var(--border-accent);
+      box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.15);
+    }
+    .eco .role { font-size: 12px; color: var(--dim); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px; }
+    .eco h3 { font-size: 1rem; }
+    .eco p { margin-bottom: 0; font-size: 0.9rem; }
+
+    /* footer */
+    footer {
+      padding: 40px 0 48px;
+      border-top: 1px solid var(--border);
+      text-align: center;
+      color: var(--dim);
+      font-size: 14px;
+    }
+    footer strong { color: var(--muted); display: block; margin-bottom: 8px; font-size: 15px; }
+    footer .links { margin-top: 12px; display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
+  </style>
+</head>
+<body>
+  <nav>
+    <div class="inner">
+      <a class="brand" href="./">harness<span>-foundry</span></a>
+      <div class="links">
+        <a class="hide-sm" href="#try">Try</a>
+        <a class="hide-sm" href="#showcases">Showcases</a>
+        <a class="hide-sm" href="#compare">vs alternatives</a>
+        <a href="https://github.com/cobusgreyling/harness-foundry">GitHub</a>
+        <a class="btn btn-primary" href="https://www.npmjs.com/package/@cobusgreyling/harness-foundry">npm</a>
+      </div>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="wrap hero-inner">
+      <div class="badge"><span class="dot"></span> Production agents runtime</div>
+      <h1>harness-foundry</h1>
+      <p class="lead">Practical, <strong>composable</strong> harness engineering for production agents.<br />The missing runtime layer between model and reliable behaviour.</p>
+      <div class="hero-art">
+        <img src="./harness-foundry.png" alt="Harness Foundry — Model → Primitives → Runtime → Trace → Evidence" width="1280" height="640" />
+      </div>
+      <div class="cta-row">
+        <a class="btn btn-primary" href="#try">Try in 60 seconds</a>
+        <a class="btn btn-ghost" href="https://github.com/cobusgreyling/harness-foundry">Star on GitHub</a>
+        <a class="btn btn-ghost" href="https://github.com/cobusgreyling/harness-foundry/discussions/16">Launch discussion</a>
+      </div>
+      <div class="badges">
+        <a href="https://github.com/cobusgreyling/harness-foundry/actions/workflows/ci.yml"><img src="https://github.com/cobusgreyling/harness-foundry/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
+        <a href="https://www.npmjs.com/package/@cobusgreyling/harness-foundry"><img src="https://img.shields.io/npm/v/@cobusgreyling/harness-foundry" alt="npm" /></a>
+        <img src="https://img.shields.io/badge/node-%3E%3D18-brightgreen" alt="Node" />
+        <img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="MIT" />
+      </div>
+    </div>
+  </header>
+
+  <section>
+    <div class="wrap">
+      <p class="section-label">The stack</p>
+      <h2>One session, end to end</h2>
+      <p class="sub">Compose harnesses from declarative primitives. Run sessions, record traces, evolve stacks from real runs — with human gates.</p>
+      <div class="pipeline">
+        <div class="step"><div class="name">Model</div><div class="meta">interface</div></div>
+        <span class="arrow">→</span>
+        <div class="step accent"><div class="name">Primitives</div><div class="meta">compose</div></div>
+        <span class="arrow">→</span>
+        <div class="step accent"><div class="name">Runtime</div><div class="meta">session</div></div>
+        <span class="arrow">→</span>
+        <div class="step"><div class="name">Trace</div><div class="meta">jsonl</div></div>
+        <span class="arrow">→</span>
+        <div class="step"><div class="name">Evidence</div><div class="meta">outerloop</div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="alt" id="ecosystem">
+    <div class="wrap">
+      <p class="section-label">Ecosystem</p>
+      <h2>Where it sits</h2>
+      <p class="sub">Design the loop. Execute the harness. Govern the outcome.</p>
+      <div class="eco">
+        <a class="card" href="https://github.com/cobusgreyling/loop-engineering" style="text-decoration:none;color:inherit">
+          <div class="role">Patterns</div>
+          <h3>loop-engineering</h3>
+          <p>How to design reliable inner loops</p>
+        </a>
+        <div class="card active">
+          <div class="role">Runtime</div>
+          <h3>harness-foundry</h3>
+          <p>Executable primitives, sessions, traces</p>
+        </div>
+        <a class="card" href="https://github.com/cobusgreyling/outerloop" style="text-decoration:none;color:inherit">
+          <div class="role">Governance</div>
+          <h3>outerloop</h3>
+          <p>Evidence, verdict, answerability</p>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <section id="try">
+    <div class="wrap">
+      <p class="section-label">Quickstart</p>
+      <h2>Try it now</h2>
+      <div class="try">
+        <p style="color:var(--muted)">Zero-config minimal stack — validate, run, inspect the trace.</p>
+        <pre><span class="comment"># scaffold</span>
+npx @cobusgreyling/harness-foundry init --from minimal
+foundry validate
+foundry run --goal "Verify harness wiring"
+foundry sessions list
+foundry trace show --session &lt;id&gt;
+foundry evolve report --session &lt;id&gt;
+
+<span class="comment"># IDE hosts</span>
+foundry host integrate cursor    <span class="comment"># or claude-code</span>
+
+<span class="comment"># full monorepo demo</span>
+git clone https://github.com/cobusgreyling/harness-foundry.git
+cd harness-foundry && pnpm install && pnpm build && pnpm demo</pre>
+        <div class="cta-row" style="justify-content:flex-start;margin-top:20px">
+          <a class="btn btn-primary" href="https://github.com/cobusgreyling/harness-foundry/blob/main/QUICKSTART.md">QUICKSTART.md</a>
+          <a class="btn btn-ghost" href="https://github.com/cobusgreyling/harness-foundry/blob/main/docs/showcase.md">Markdown showcase</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="alt" id="showcases">
+    <div class="wrap">
+      <p class="section-label">Showcases</p>
+      <h2>Five ways to use it</h2>
+      <p class="sub">From CI smoke tests to full governance — pick a stack and grow.</p>
+      <div class="grid">
+        <article class="card">
+          <div class="num">01 · MINIMAL</div>
+          <h3>60-second smoke stack</h3>
+          <p>Smallest reliable harness for CI and first exploration.</p>
+          <pre>npx @cobusgreyling/harness-foundry init --from minimal
+foundry validate && foundry run --goal "Hello"</pre>
+          <p style="margin-top:12px" class="link"><a href="https://github.com/cobusgreyling/harness-foundry/tree/main/examples/hello-harness">hello-harness example →</a></p>
+        </article>
+        <article class="card">
+          <div class="num">02 · IMPLEMENTER</div>
+          <h3>Production-shaped loops</h3>
+          <p>Git worktrees, test recovery, evidence emission.</p>
+          <pre>foundry init --from implementer --name my-app
+foundry run --goal "Implement feature X" --turns 2
+foundry evolve proposal --session &lt;id&gt;</pre>
+          <p style="margin-top:12px" class="link"><a href="https://github.com/cobusgreyling/harness-foundry/tree/main/stacks/implementer">implementer preset →</a></p>
+        </article>
+        <article class="card">
+          <div class="num">03 · OUTERLOOP</div>
+          <h3>Runtime + governance</h3>
+          <p>Evidence → verdict → answerability in one flow.</p>
+          <pre>foundry run --goal "Implement with evidence"
+outerloop verdict review &lt;evidence-id&gt;
+outerloop ledger why &lt;evidence-id&gt;</pre>
+          <p style="margin-top:12px" class="link"><a href="https://github.com/cobusgreyling/harness-foundry/tree/main/examples/with-outerloop">with-outerloop walkthrough →</a></p>
+        </article>
+        <article class="card">
+          <div class="num">04 · IDE HOSTS</div>
+          <h3>Cursor &amp; Claude Code</h3>
+          <p>Same versioned stack inside your IDE — not a one-off prompt.</p>
+          <pre>foundry host integrate cursor
+foundry host detect
+foundry run --goal "…" --host cursor</pre>
+          <p style="margin-top:12px" class="link"><a href="https://github.com/cobusgreyling/harness-foundry#cli-essentials">CLI host integrate →</a></p>
+        </article>
+        <article class="card">
+          <div class="num">05 · EVOLVE</div>
+          <h3>Trace-driven evolution</h3>
+          <p>Turn runs into stack improvements — with human gates.</p>
+          <pre>foundry evolve report --session &lt;id&gt;     # L1
+foundry evolve proposal --session &lt;id&gt;   # L2
+# human reviews before stack.yaml change</pre>
+          <p style="margin-top:12px" class="link"><a href="https://github.com/cobusgreyling/harness-foundry/blob/main/FOUNDRY.md">FOUNDRY cadence →</a></p>
+        </article>
+        <article class="card">
+          <div class="num">CI · GATE</div>
+          <h3>Validate stacks in PRs</h3>
+          <p>Reusable workflow for stack validation on every pull request.</p>
+          <pre>jobs:
+  foundry-gate:
+    uses: cobusgreyling/harness-foundry/
+      .github/workflows/foundry-gate.yml@main</pre>
+          <p style="margin-top:12px" class="link"><a href="https://github.com/cobusgreyling/harness-foundry/blob/main/docs/github-action.md">github-action docs →</a></p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section id="primitives">
+    <div class="wrap">
+      <p class="section-label">Catalogue · v0.4</p>
+      <h2>Primitive layers</h2>
+      <p class="sub">Versioned, declarative, swappable. Browse with <code>foundry primitives list</code>.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Layer</th><th>Primitives</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Interface</strong></td><td><code>model/mock</code>, <code>model/anthropic</code></td></tr>
+            <tr><td><strong>Composition</strong></td><td><code>context/state-file</code>, <code>tools/git-worktree-write</code></td></tr>
+            <tr><td><strong>Execution</strong></td><td><code>control/token-budget-100k</code>, <code>sandbox/worktree-isolated</code></td></tr>
+            <tr><td><strong>Reliability</strong></td><td><code>observability/span-per-turn</code>, <code>emit/outerloop-evidence</code>, <code>recovery/revert-on-test-fail</code>, <code>recovery/narrow-scope</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p style="margin-top:14px;color:var(--muted);font-size:0.95rem">
+        Don’t want to touch TypeScript?
+        <a href="https://github.com/cobusgreyling/harness-foundry/issues/new?template=primitive_request.yml">Propose a primitive</a>.
+      </p>
+    </div>
+  </section>
+
+  <section class="alt" id="compare">
+    <div class="wrap">
+      <p class="section-label">Positioning</p>
+      <h2>vs alternatives</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Approach</th><th>Strength</th><th>Gap foundry fills</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Raw Agent SDK</td><td>Model access</td><td>No composable taxonomy, traces, or governance seam</td></tr>
+            <tr><td>LangGraph / ADK</td><td>Graph orchestration</td><td>Graph-first, not primitive-first harness engineering</td></tr>
+            <tr><td>Cursor / Claude Code</td><td>IDE agents</td><td>Host-specific; hard to version and evolve</td></tr>
+            <tr><td>loop-engineering</td><td>Loop patterns</td><td>Patterns without executable runtime</td></tr>
+            <tr><td>outerloop</td><td>Evidence &amp; verdicts</td><td>Governance without inner-loop execution</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p style="margin-top:14px"><a href="https://github.com/cobusgreyling/harness-foundry/blob/main/docs/vs-alternatives.md">Full comparison →</a></p>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap">
+      <p class="section-label">Community</p>
+      <h2>Get involved</h2>
+      <div class="grid">
+        <a class="card" href="https://github.com/cobusgreyling/harness-foundry/discussions/16" style="text-decoration:none;color:inherit">
+          <h3>Launch discussion</h3>
+          <p>Show HN follow-ups, first-run Q&amp;A, launch chatter.</p>
+          <span class="link">Open discussion →</span>
+        </a>
+        <a class="card" href="https://github.com/cobusgreyling/harness-foundry/discussions/12" style="text-decoration:none;color:inherit">
+          <h3>Contributor start</h3>
+          <p>Orientation for new contributors.</p>
+          <span class="link">Start here →</span>
+        </a>
+        <a class="card" href="https://github.com/cobusgreyling/harness-foundry/blob/main/docs/good-first-issues.md" style="text-decoration:none;color:inherit">
+          <h3>Good first issues</h3>
+          <p>Small, well-scoped ways to help.</p>
+          <span class="link">Browse issues →</span>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="wrap">
+      <strong>Own the runtime. Trace the runs. Govern the outcomes.</strong>
+      <p>v0.4.0 · MIT · Built with loop-engineering · companion to outerloop</p>
+      <div class="links">
+        <a href="https://github.com/cobusgreyling/harness-foundry">GitHub</a>
+        <a href="https://www.npmjs.com/package/@cobusgreyling/harness-foundry">npm</a>
+        <a href="https://github.com/cobusgreyling/outerloop">outerloop</a>
+        <a href="https://github.com/cobusgreyling/loop-engineering">loop-engineering</a>
+        <a href="https://github.com/cobusgreyling/harness-foundry/blob/main/docs/LAUNCH.md">Launch kit</a>
+      </div>
+    </div>
+  </footer>
+</body>
+</html>

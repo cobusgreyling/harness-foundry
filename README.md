@@ -13,7 +13,7 @@
 
 The missing runtime layer between model and reliable behaviour.
 
-→ **[Showcase](docs/showcase.md)** — demos, stacks, full-stack walkthroughs, and stories  
+→ **[Showcase site](https://cobusgreyling.github.io/harness-foundry/)** · **[Showcase doc](docs/showcase.md)** — demos, stacks, full-stack walkthroughs, and stories  
 → **[Launch discussion](https://github.com/cobusgreyling/harness-foundry/discussions/16)** — Show HN / first-run Q&A
 
 ## Ecosystem
