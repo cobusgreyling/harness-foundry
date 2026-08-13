@@ -1,6 +1,6 @@
 {
   "name": "@cobusgreyling/harness-foundry-host",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "description": "Host adapters for Cursor, Claude Code, and standalone foundry sessions",
   "type": "module",
   "main": "./dist/index.js",

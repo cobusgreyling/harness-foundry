@@ -1,5 +1,14 @@
 # @cobusgreyling/harness-foundry-evolve
 
+## 0.5.1
+
+### Patch Changes
+
+- Updated dependencies [12c3cd8]
+  - @cobusgreyling/harness-foundry-core@0.5.1
+  - @cobusgreyling/harness-foundry-compose@0.5.1
+  - @cobusgreyling/harness-foundry-trace@0.5.1
+
 ## 0.5.0
 
 ### Minor Changes
