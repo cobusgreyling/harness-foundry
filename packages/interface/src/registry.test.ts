@@ -14,7 +14,11 @@ describe("getModelProvider", () => {
     );
   });
 
-  it("lists at least four providers", () => {
-    expect(listModelProviders().length).toBeGreaterThanOrEqual(4);
+  it("resolves grok", () => {
+    expect(getModelProvider({ primitive: "model/grok" })?.id).toBe("model/grok");
+  });
+
+  it("lists at least five providers", () => {
+    expect(listModelProviders().length).toBeGreaterThanOrEqual(5);
   });
 });

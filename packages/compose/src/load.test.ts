@@ -1,6 +1,8 @@
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
-import { resolveStack, validateStack } from "./load.js";
-import { resolveStackPreset } from "./stacks.js";
+import { loadMergedCatalog, resolveStack, validateStack } from "./load.js";
+import { resolveStackPreset, stackFromPreset } from "./stacks.js";
 import type { HarnessStack } from "@cobusgreyling/harness-foundry-core";
 
 const minimalStack: HarnessStack = {
@@ -27,7 +29,9 @@ describe("resolveStackPreset", () => {
     expect(resolveStackPreset("implementer")).toBe("implementer");
     expect(resolveStackPreset("daily-triage")).toBe("triage");
     expect(resolveStackPreset("reviewer")).toBe("reviewer");
-    expect(resolveStackPreset("loop-engineering:ci-sweeper")).toBe("implementer");
+    expect(resolveStackPreset("loop-engineering:ci-sweeper")).toBe("ci-sweeper");
+    expect(resolveStackPreset("mcp-worker")).toBe("mcp-worker");
+    expect(resolveStackPreset("with-outerloop")).toBe("with-outerloop");
     expect(resolveStackPreset("loop-engineering:daily-triage")).toBe("triage");
     expect(resolveStackPreset("unknown-pattern")).toBe("minimal");
   });
@@ -53,5 +57,25 @@ describe("validateStack", () => {
   it("accepts minimal stack", () => {
     const result = validateStack(minimalStack);
     expect(result.valid).toBe(true);
+  });
+});
+
+describe("catalogue depth", () => {
+  it("loads at least 25 primitives from the monorepo catalogue", async () => {
+    const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
+    const catalog = await loadMergedCatalog(repoRoot);
+    expect(catalog.size).toBeGreaterThanOrEqual(25);
+    expect(catalog.has("model/grok")).toBe(true);
+    expect(catalog.has("policy/path-allowlist")).toBe(true);
+    expect(catalog.has("sandbox/readonly")).toBe(true);
+  });
+
+  it("new presets validate against the catalogue", async () => {
+    const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../..");
+    const catalog = await loadMergedCatalog(repoRoot);
+    for (const preset of ["ci-sweeper", "mcp-worker", "with-outerloop"] as const) {
+      const result = validateStack(stackFromPreset(preset, preset), catalog);
+      expect(result.valid, result.errors.join("; ")).toBe(true);
+    }
   });
 });

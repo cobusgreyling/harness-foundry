@@ -1,7 +1,7 @@
 import type { PrimitiveRef } from "@cobusgreyling/harness-foundry-core";
 import { anthropicProvider } from "./anthropic.js";
 import { mockProvider } from "./mock.js";
-import { openaiCompatibleProvider, openaiProvider } from "./openai.js";
+import { grokProvider, openaiCompatibleProvider, openaiProvider } from "./openai.js";
 import type { ModelProvider } from "./types.js";
 
 const providers = new Map<string, ModelProvider>([
@@ -9,6 +9,7 @@ const providers = new Map<string, ModelProvider>([
   [anthropicProvider.id, anthropicProvider],
   [openaiProvider.id, openaiProvider],
   [openaiCompatibleProvider.id, openaiCompatibleProvider],
+  [grokProvider.id, grokProvider],
 ]);
 
 /** Register or replace a model provider (plugin / test hook). */

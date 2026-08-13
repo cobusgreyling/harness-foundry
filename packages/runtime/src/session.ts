@@ -1,4 +1,5 @@
 import fs from "node:fs/promises";
+import path from "node:path";
 import { randomUUID } from "node:crypto";
 import {
   loadMergedCatalog,
@@ -25,6 +26,8 @@ import { createSessionRuntime } from "./execution/runtime-state.js";
 import { runTurnLoop } from "./execution/turn-loop.js";
 import { resolveTestCommand, runVerification } from "./execution/verify.js";
 import { removeSessionWorktree } from "./execution/worktree.js";
+import { ingestHostTurns } from "./host-turns.js";
+import { upsertSessionIndex } from "./session-index.js";
 
 export type RunSessionOptions = {
   projectRoot: string;
@@ -32,6 +35,8 @@ export type RunSessionOptions = {
   turns?: number;
   dryRun?: boolean;
   host?: "cursor" | "claude-code" | "standalone" | "auto";
+  /** Detection signals from the host adapter (recorded on host.bridge). */
+  hostSignals?: string[];
 };
 
 export type RunSessionResult = {
@@ -83,9 +88,11 @@ function setupOrder(primitives: PrimitiveRef[]): PrimitiveRef[] {
   const rank = (id: string): number => {
     if (id.startsWith("model/")) return 100;
     if (id.startsWith("context/")) return 10;
+    if (id.startsWith("memory/")) return 15;
     if (id.startsWith("tools/")) return 20;
     if (id.startsWith("sandbox/")) return 30;
     if (id.startsWith("control/")) return 40;
+    if (id.startsWith("policy/")) return 45;
     if (id.startsWith("recovery/")) return 50;
     if (id.startsWith("observability/") || id.startsWith("emit/")) return 60;
     return 70;
@@ -100,6 +107,7 @@ export async function runSession(options: RunSessionOptions): Promise<RunSession
     turns = 8,
     dryRun = false,
     host = "standalone",
+    hostSignals = [],
   } = options;
 
   const stack = await loadStackFromFile(stackPath(projectRoot));
@@ -120,6 +128,7 @@ export async function runSession(options: RunSessionOptions): Promise<RunSession
   const recorder = new TraceRecorder(traceFile);
   const startedAt = new Date().toISOString();
   const runtime = createSessionRuntime(host === "auto" ? "standalone" : host);
+  runtime.hostSignals = hostSignals;
 
   let manifest: SessionManifest = SessionManifestSchema.parse({
     id: sessionId,
@@ -136,7 +145,18 @@ export async function runSession(options: RunSessionOptions): Promise<RunSession
     sessionId,
     type: "session.start",
     detail: goal,
-    metadata: { dryRun, stack: stack.name, host: runtime.host },
+    metadata: { dryRun, stack: stack.name, host: runtime.host, hostSignals },
+  });
+
+  await recorder.record({
+    sessionId,
+    type: "host.bridge",
+    layer: "reliability",
+    detail: `Host ${runtime.host ?? "standalone"}`,
+    metadata: {
+      host: runtime.host ?? "standalone",
+      signals: hostSignals,
+    },
   });
 
   await recorder.record({
@@ -196,9 +216,17 @@ export async function runSession(options: RunSessionOptions): Promise<RunSession
     }
   }
 
-  if (!dryRun && runtime.recoveryArmed.has("recovery/revert-on-test-fail")) {
-    const verification = await verifySession(recoveryCtx, stack);
-    if (!verification.passed) {
+  if (!dryRun && runtime.recoveryArmed.size > 0) {
+    let verification = await verifySession(recoveryCtx, stack);
+    if (!verification.passed && runtime.recoveryArmed.has("recovery/retry-once")) {
+      await triggerRecovery(
+        "recovery/retry-once",
+        recoveryCtx,
+        `Verification failed, retrying once: ${verification.detail}`,
+      );
+      verification = await verifySession(recoveryCtx, stack);
+    }
+    if (!verification.passed && runtime.recoveryArmed.has("recovery/revert-on-test-fail")) {
       const recovery = await triggerRecovery(
         "recovery/revert-on-test-fail",
         recoveryCtx,
@@ -208,10 +236,7 @@ export async function runSession(options: RunSessionOptions): Promise<RunSession
         manifest = { ...manifest, status: "recovered" };
         await fs.writeFile(manifestFile, `${JSON.stringify(manifest, null, 2)}\n`, "utf8");
       }
-    }
-  } else if (!dryRun && runtime.recoveryArmed.has("recovery/narrow-scope")) {
-    const verification = await verifySession(recoveryCtx, stack);
-    if (!verification.passed) {
+    } else if (!verification.passed && runtime.recoveryArmed.has("recovery/narrow-scope")) {
       const recovery = await triggerRecovery(
         "recovery/narrow-scope",
         recoveryCtx,
@@ -232,6 +257,40 @@ export async function runSession(options: RunSessionOptions): Promise<RunSession
     recorder,
     tracePath: traceFile,
   });
+
+  await ingestHostTurns({
+    projectRoot,
+    sessionId,
+    recorder,
+    host: runtime.host ?? "standalone",
+  });
+
+  if (runtime.recordToolTimeline) {
+    const timelinePath = path.join(sessionDir(projectRoot, sessionId), "tool-timeline.json");
+    await fs.writeFile(
+      timelinePath,
+      `${JSON.stringify({ sessionId, entries: runtime.toolTimeline }, null, 2)}\n`,
+      "utf8",
+    );
+  }
+
+  if (runtime.memoryLogPath) {
+    try {
+      await fs.appendFile(
+        runtime.memoryLogPath,
+        `${JSON.stringify({
+          sessionId,
+          type: "session.end",
+          at: new Date().toISOString(),
+          goal,
+          status: manifest.status,
+        })}\n`,
+        "utf8",
+      );
+    } catch {
+      // best-effort
+    }
+  }
 
   const endedAt = new Date().toISOString();
   const finalStatus =
@@ -258,7 +317,22 @@ export async function runSession(options: RunSessionOptions): Promise<RunSession
       verificationPassed: runtime.verificationPassed,
       tokensUsed: runtime.tokensUsed,
       toolCallsUsed: runtime.toolCallsUsed,
+      host: runtime.host,
     },
+  });
+
+  await upsertSessionIndex(projectRoot, {
+    id: sessionId,
+    stackName: stack.name,
+    stackVersion: stack.version,
+    startedAt,
+    endedAt,
+    status: manifest.status,
+    turnCount: manifest.turnCount,
+    host: runtime.host,
+    goal,
+    tokensUsed: runtime.tokensUsed,
+    toolCallsUsed: runtime.toolCallsUsed,
   });
 
   if (runtime.worktreePath && manifest.status === "completed" && runtime.verificationPassed) {

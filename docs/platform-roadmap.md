@@ -198,11 +198,11 @@ foundry evolve report --from-bench <run-id>
 
 #### Runtime / CLI
 
-- [ ] Primitive authoring guide: `docs/primitive-spec.md` (schema, layers, activation hooks)
-- [ ] `foundry primitives show <id>`
+- [x] Primitive authoring guide: `docs/primitive-spec.md` (schema, layers, activation hooks)
+- [x] `foundry primitives show <id>`
 - [ ] Config validation per primitive (zod from YAML `configSchema` optional field)
-- [ ] Policy primitives enforced in `tools.ts` / `run_command`
-- [ ] Host bridge: record host-invoked turns into session traces (Cursor + Claude Code at least)
+- [x] Policy primitives enforced in `tools.ts` / `run_command`
+- [x] Host bridge: record host-invoked turns into session traces (Cursor + Claude Code at least)
 
 **Exit criteria**
 

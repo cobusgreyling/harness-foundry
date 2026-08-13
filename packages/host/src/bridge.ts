@@ -3,7 +3,7 @@ import {
   type RunSessionOptions,
   type RunSessionResult,
 } from "@cobusgreyling/harness-foundry-runtime";
-import { resolveHost, type HostKind } from "./detect.js";
+import { detectHost, resolveHost, type HostKind } from "./detect.js";
 
 export type BridgeSessionOptions = Omit<RunSessionOptions, "host"> & {
   host?: "auto" | HostKind;
@@ -12,8 +12,13 @@ export type BridgeSessionOptions = Omit<RunSessionOptions, "host"> & {
 export async function bridgeHostSession(
   options: BridgeSessionOptions,
 ): Promise<RunSessionResult & { host: HostKind }> {
+  const detection = await detectHost(options.projectRoot);
   const host = await resolveHost(options.host ?? "auto", options.projectRoot);
-  const result = await runSession({ ...options, host });
+  const result = await runSession({
+    ...options,
+    host,
+    hostSignals: options.hostSignals ?? detection.signals,
+  });
 
   return {
     ...result,

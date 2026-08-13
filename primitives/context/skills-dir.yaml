@@ -1,0 +1,5 @@
+id: context/skills-dir
+layer: composition
+description: Load skill markdown from skills/ or .foundry/skills into the session prompt
+defaults:
+  dir: skills

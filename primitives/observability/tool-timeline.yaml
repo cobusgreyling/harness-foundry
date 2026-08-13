@@ -1,0 +1,4 @@
+id: observability/tool-timeline
+layer: reliability
+description: Write a per-session tool timeline JSON artifact
+defaults: {}

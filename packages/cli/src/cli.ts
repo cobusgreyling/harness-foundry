@@ -26,7 +26,9 @@ import {
   setupClaudeCode,
   setupCursor,
 } from "@cobusgreyling/harness-foundry-host";
-import { readTraceEvents } from "@cobusgreyling/harness-foundry-trace";
+import { formatTraceReplay, readTraceEvents } from "@cobusgreyling/harness-foundry-trace";
+import { loadSessionIndex } from "@cobusgreyling/harness-foundry-runtime";
+import { renderCompletionScript } from "./completion.js";
 import { initProject } from "./init-project.js";
 
 const program = new Command();
@@ -34,7 +36,13 @@ const program = new Command();
 program
   .name("foundry")
   .description("Composable harness runtime for production agents")
-  .version("0.5.0");
+  .version("0.5.0")
+  .option("-C, --project-root <dir>", "Project root (default: cwd)");
+
+function resolveCwd(): string {
+  const root = program.opts<{ projectRoot?: string }>().projectRoot;
+  return root ? path.resolve(root) : process.cwd();
+}
 
 program
   .command("init")
@@ -42,7 +50,7 @@ program
   .option("--name <name>", "Harness stack name (default: directory name)")
   .option(
     "--from <preset>",
-    "Stack preset or loop-engineering pattern (minimal | implementer | reviewer | triage | daily-triage | …)",
+    "Stack preset or loop-engineering pattern (minimal | implementer | reviewer | triage | ci-sweeper | mcp-worker | with-outerloop | daily-triage | …)",
     "minimal",
   )
   .option("--dry-run", "Preview files that would be written without creating them")
@@ -55,7 +63,7 @@ program
     withCursor?: boolean;
     withClaudeCode?: boolean;
   }) => {
-    const cwd = process.cwd();
+    const cwd = resolveCwd();
     if (options.dryRun) {
       const result = await initProject(cwd, {
         name: options.name,
@@ -90,7 +98,7 @@ program
   .command("validate")
   .description("Validate active stack against primitive catalogue")
   .action(async () => {
-    const cwd = process.cwd();
+    const cwd = resolveCwd();
     try {
       const stack = await loadStackFromFile(stackPath(cwd));
       const catalog = await loadMergedCatalog(cwd);
@@ -117,7 +125,7 @@ stack
   .command("show")
   .description("Show active harness stack")
   .action(async () => {
-    const cwd = process.cwd();
+    const cwd = resolveCwd();
     try {
       const loaded = await loadStackFromFile(stackPath(cwd));
       const resolved = resolveStack(loaded);
@@ -150,7 +158,7 @@ primitives
   .command("list")
   .description("List available primitives")
   .action(async () => {
-    const cwd = process.cwd();
+    const cwd = resolveCwd();
     const catalog = await loadMergedCatalog(cwd);
     const entries = [...catalog.values()].sort((a, b) => a.id.localeCompare(b.id));
     for (const entry of entries) {
@@ -165,7 +173,7 @@ primitives
   .description("Show a single primitive definition")
   .argument("<id>", "Primitive id (e.g. control/tool-call-cap)")
   .action(async (id: string) => {
-    const cwd = process.cwd();
+    const cwd = resolveCwd();
     const catalog = await loadMergedCatalog(cwd);
     const entry = catalog.get(id);
     if (!entry) {
@@ -188,7 +196,18 @@ sessions
   .command("list")
   .description("List harness sessions")
   .action(async () => {
-    const cwd = process.cwd();
+    const cwd = resolveCwd();
+    const index = await loadSessionIndex(cwd);
+    if (index.sessions.length > 0) {
+      for (const entry of index.sessions) {
+        const host = entry.host ? ` host=${entry.host}` : "";
+        console.log(
+          `${chalk.bold(entry.id)} ${chalk.dim(entry.startedAt)} ${entry.status} turns=${entry.turnCount}${host}`,
+        );
+      }
+      return;
+    }
+
     const dir = sessionsDir(cwd);
     let entries: string[];
     try {
@@ -199,6 +218,7 @@ sessions
     }
 
     for (const id of entries.sort().reverse()) {
+      if (id === "index.json") continue;
       const manifestPath = path.join(dir, id, "manifest.json");
       try {
         const raw = await fs.readFile(manifestPath, "utf8");
@@ -220,7 +240,7 @@ program
   .option("--host <host>", "Host adapter: auto | cursor | claude-code | standalone", "auto")
   .option("--dry-run", "Record session lifecycle without activating primitives")
   .action(async (options: { goal?: string; turns: string; host: string; dryRun?: boolean }) => {
-    const cwd = process.cwd();
+    const cwd = resolveCwd();
     const host = await resolveHost(
       options.host as "auto" | "cursor" | "claude-code" | "standalone",
       cwd,
@@ -252,7 +272,7 @@ host
   .command("detect")
   .description("Detect active host environment")
   .action(async () => {
-    const cwd = process.cwd();
+    const cwd = resolveCwd();
     const detection = await detectHost(cwd);
     console.log(chalk.green(`Host: ${detection.host}`));
     for (const signal of detection.signals) {
@@ -265,7 +285,7 @@ host
   .description("Install host integration files")
   .argument("<target>", "cursor | claude-code")
   .action(async (target: string) => {
-    const cwd = process.cwd();
+    const cwd = resolveCwd();
     try {
       if (target === "cursor") {
         const result = await setupCursor(cwd);
@@ -290,11 +310,27 @@ host
 const trace = program.command("trace").description("Inspect session traces");
 
 trace
+  .command("replay")
+  .description("Replay a session trace as a narrative")
+  .requiredOption("--session <id>", "Session ID")
+  .action(async (options: { session: string }) => {
+    const cwd = resolveCwd();
+    const traceFile = path.join(cwd, ".foundry", "sessions", options.session, "trace.jsonl");
+    const events = await readTraceEvents(traceFile);
+    if (events.length === 0) {
+      console.error(chalk.red(`No trace found for session ${options.session}`));
+      process.exitCode = 1;
+      return;
+    }
+    console.log(formatTraceReplay(events));
+  });
+
+trace
   .command("show")
   .description("Show trace events for a session")
   .requiredOption("--session <id>", "Session ID")
   .action(async (options: { session: string }) => {
-    const cwd = process.cwd();
+    const cwd = resolveCwd();
     const traceFile = path.join(cwd, ".foundry", "sessions", options.session, "trace.jsonl");
     const events = await readTraceEvents(traceFile);
 
@@ -318,7 +354,7 @@ evolve
   .description("Generate L1 evolution report from a session trace")
   .requiredOption("--session <id>", "Session ID")
   .action(async (options: { session: string }) => {
-    const cwd = process.cwd();
+    const cwd = resolveCwd();
     const traceFile = path.join(cwd, ".foundry", "sessions", options.session, "trace.jsonl");
     try {
       const stack = await loadStackFromFile(stackPath(cwd));
@@ -350,7 +386,7 @@ evolve
   .description("Generate L2 stack proposal from a session trace (human review required)")
   .requiredOption("--session <id>", "Session ID")
   .action(async (options: { session: string }) => {
-    const cwd = process.cwd();
+    const cwd = resolveCwd();
     const traceFile = path.join(cwd, ".foundry", "sessions", options.session, "trace.jsonl");
     try {
       const stack = await loadStackFromFile(stackPath(cwd));
@@ -378,7 +414,7 @@ evolve
   .requiredOption("--proposal <idOrPath>", "Proposal UUID or path to .yaml")
   .option("--yes", "Confirm human review complete (required)")
   .action(async (options: { proposal: string; yes?: boolean }) => {
-    const cwd = process.cwd();
+    const cwd = resolveCwd();
     try {
       const result = await applyEvolveProposal({
         projectRoot: cwd,
@@ -400,6 +436,20 @@ evolve
       console.error(chalk.red(error instanceof Error ? error.message : String(error)));
       process.exitCode = 1;
     }
+  });
+
+program
+  .command("completion")
+  .description("Print shell completion script (bash | zsh | fish)")
+  .argument("[shell]", "bash | zsh | fish", "bash")
+  .action((shell: string) => {
+    const normalized = shell.toLowerCase();
+    if (normalized !== "bash" && normalized !== "zsh" && normalized !== "fish") {
+      console.error(chalk.red("Unknown shell. Use bash, zsh, or fish."));
+      process.exitCode = 1;
+      return;
+    }
+    process.stdout.write(renderCompletionScript(normalized));
   });
 
 program.parseAsync(process.argv).catch((error: unknown) => {

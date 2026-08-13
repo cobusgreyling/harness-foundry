@@ -18,6 +18,10 @@ export function sessionsDir(projectRoot: string): string {
   return path.join(foundryDir(projectRoot), "sessions");
 }
 
+export function sessionsIndexPath(projectRoot: string): string {
+  return path.join(sessionsDir(projectRoot), "index.json");
+}
+
 export function sessionDir(projectRoot: string, sessionId: string): string {
   return path.join(sessionsDir(projectRoot), sessionId);
 }

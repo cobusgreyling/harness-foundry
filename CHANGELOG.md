@@ -2,7 +2,39 @@
 
 All notable changes to harness-foundry are documented here. Package-level changelogs live under `packages/*/CHANGELOG.md`.
 
-## Unreleased
+## Unreleased — v0.5.1
+
+**Catalogue depth + enforced policy + host traces.**
+
+### Runtime
+
+- Policy primitives enforced in file tools and `run_command`: `sandbox/readonly`, `policy/path-allowlist`, `policy/command-allowlist`, `policy/secret-scrub`, `control/network-deny`
+- Built-in `search_grep` tool (`tools/search-grep`)
+- `context/skills-dir` injects skill markdown into the system prompt
+- `memory/file-log` appends a JSONL memory log
+- `observability/tool-timeline` writes `.foundry/sessions/<id>/tool-timeline.json`
+- `recovery/retry-once` retries verification once before other recovery
+- Session index at `.foundry/sessions/index.json`
+- Host bridge records `host.bridge` / `host.turn` (from `.foundry/host/turns.jsonl` or `FOUNDRY_HOST_TRANSCRIPT`)
+- Trace events: `host.bridge`, `host.turn`, `policy.denied`
+
+### Interface
+
+- `model/grok` — xAI Grok via OpenAI-compatible Chat Completions (`XAI_API_KEY`)
+
+### Composition / CLI
+
+- Stacks: `ci-sweeper`, `mcp-worker`, `with-outerloop` (enables evidence hook)
+- `foundry init --from` accepts the new presets
+- `foundry -C/--project-root` (fixes host post-run hooks)
+- `foundry trace replay --session <id>`
+- `foundry completion bash|zsh|fish`
+- Catalogue loader scans every primitive subdirectory
+- Example stack: `examples/mcp-filesystem/stack.yaml`
+
+### Catalogue
+
+- ≥ 25 primitives (was 15)
 
 ## v0.5.0 — 2026-08-10
 

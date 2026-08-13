@@ -1,0 +1,7 @@
+id: model/grok
+layer: interface
+description: xAI Grok adapter via OpenAI-compatible Chat Completions (XAI_API_KEY)
+defaults:
+  model: grok-4
+  maxTokens: 1024
+  baseUrl: https://api.x.ai/v1

@@ -41,6 +41,15 @@ describe("initProject", () => {
     const dir2 = await fs.mkdtemp(path.join(os.tmpdir(), "foundry-init-le2-"));
     tmpDirs.push(dir2);
     const fix = await initProject(dir2, { from: "ci-sweeper" });
-    expect(fix.preset).toBe("implementer");
+    expect(fix.preset).toBe("ci-sweeper");
+  });
+
+  it("enables the outerloop hook for with-outerloop", async () => {
+    const dir = await fs.mkdtemp(path.join(os.tmpdir(), "foundry-init-ol-"));
+    tmpDirs.push(dir);
+    const result = await initProject(dir, { from: "with-outerloop", name: "gov" });
+    expect(result.preset).toBe("with-outerloop");
+    const hook = await fs.readFile(path.join(dir, ".foundry/hooks/outerloop.yaml"), "utf8");
+    expect(hook).toMatch(/enabled:\s*true/);
   });
 });

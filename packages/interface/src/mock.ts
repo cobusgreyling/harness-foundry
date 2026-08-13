@@ -82,6 +82,13 @@ export const mockProvider: ModelProvider = {
         name: "read_file",
         arguments: { path: pathMatch?.[1] ?? ".foundry/state/STATE.md" },
       });
+    } else if (hasTool(tools, "search_grep") && /\b(search|grep|find|rg)\b/i.test(lower)) {
+      const queryMatch = goal.match(/(?:search|grep|find|rg)\s+["']?([^\s"']+)/i);
+      toolCalls.push({
+        id: `call_${randomUUID().slice(0, 8)}`,
+        name: "search_grep",
+        arguments: { query: queryMatch?.[1] ?? "TODO", path: "." },
+      });
     } else if (hasTool(tools, "run_command") && /\b(run|test|npm|pnpm|shell)\b/i.test(lower)) {
       toolCalls.push({
         id: `call_${randomUUID().slice(0, 8)}`,

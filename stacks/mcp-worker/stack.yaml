@@ -1,0 +1,20 @@
+name: mcp-worker
+version: 1.0.0
+description: MCP-first tool loop (stdio server + builtins)
+layers:
+  interface:
+    - primitive: model/mock
+  composition:
+    - primitive: context/state-file
+    - primitive: tools/mcp-stdio
+    - primitive: tools/search-grep
+  execution:
+    - primitive: control/token-budget-50k
+    - primitive: control/tool-call-cap
+      config:
+        maxToolCalls: 25
+    - primitive: policy/secret-scrub
+  reliability:
+    - primitive: observability/span-per-turn
+    - primitive: observability/tool-timeline
+    - primitive: emit/outerloop-evidence

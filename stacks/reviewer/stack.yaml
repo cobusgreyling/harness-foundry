@@ -7,11 +7,15 @@ layers:
   composition:
     - primitive: context/state-file
     - primitive: context/agents-md
+    - primitive: tools/search-grep
   execution:
-    - primitive: control/token-budget-100k
+    - primitive: sandbox/readonly
+    - primitive: policy/secret-scrub
+    - primitive: control/token-budget-50k
     - primitive: control/tool-call-cap
       config:
         maxToolCalls: 15
   reliability:
     - primitive: observability/span-per-turn
+    - primitive: observability/tool-timeline
     - primitive: emit/outerloop-evidence

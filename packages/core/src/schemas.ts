@@ -64,6 +64,9 @@ export const TraceEventTypeSchema = z.enum([
   "verification.run",
   "verification.pass",
   "verification.fail",
+  "host.bridge",
+  "host.turn",
+  "policy.denied",
   "error",
 ]);
 

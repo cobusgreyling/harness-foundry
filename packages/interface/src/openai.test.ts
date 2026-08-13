@@ -1,14 +1,20 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { openaiCompatibleProvider, openaiProvider } from "./openai.js";
+import { grokProvider, openaiCompatibleProvider, openaiProvider } from "./openai.js";
 
 const prevOpenAI = process.env.OPENAI_API_KEY;
 const prevCompat = process.env.OPENAI_COMPAT_API_KEY;
+const prevXai = process.env.XAI_API_KEY;
+const prevGrok = process.env.GROK_API_KEY;
 
 afterEach(() => {
   if (prevOpenAI === undefined) delete process.env.OPENAI_API_KEY;
   else process.env.OPENAI_API_KEY = prevOpenAI;
   if (prevCompat === undefined) delete process.env.OPENAI_COMPAT_API_KEY;
   else process.env.OPENAI_COMPAT_API_KEY = prevCompat;
+  if (prevXai === undefined) delete process.env.XAI_API_KEY;
+  else process.env.XAI_API_KEY = prevXai;
+  if (prevGrok === undefined) delete process.env.GROK_API_KEY;
+  else process.env.GROK_API_KEY = prevGrok;
 });
 
 describe("openai providers (simulated)", () => {
@@ -43,5 +49,16 @@ describe("openai providers (simulated)", () => {
     });
     expect(result.simulated).toBe(true);
     expect(result.content).toMatch(/openai-compatible-simulated|Acknowledged|mock/i);
+  });
+
+  it("model/grok falls back to simulated without XAI_API_KEY", async () => {
+    delete process.env.XAI_API_KEY;
+    delete process.env.GROK_API_KEY;
+    const result = await grokProvider.complete({
+      goal: "hello",
+      messages: [{ role: "user", content: "hello" }],
+    });
+    expect(result.simulated).toBe(true);
+    expect(result.provider).toBe("grok");
   });
 });

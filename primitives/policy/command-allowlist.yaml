@@ -1,0 +1,5 @@
+id: policy/command-allowlist
+layer: execution
+description: Restrict run_command to an allowlist of command prefixes
+defaults:
+  commands: []

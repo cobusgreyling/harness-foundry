@@ -108,22 +108,23 @@ L2 proposal written — Human gate: review before applying to stack.yaml
 
 → [QUICKSTART.md](QUICKSTART.md) · [Windows](QUICKSTART.windows.md)
 
-→ also(./QUICKSTART.md)
-
 ## Choose your stack
 
 | Persona | Get started |
 |---------|-------------|
 | **Smoke / CI** | `foundry init --from minimal` |
 | **Implementer** | `foundry init --from implementer` |
-| **+ Governance** | [with-outerloop example](examples/with-outerloop/) |
+| **Review / triage** | `foundry init --from reviewer` · `foundry init --from triage` |
+| **CI sweeper** | `foundry init --from ci-sweeper` |
+| **MCP worker** | `foundry init --from mcp-worker` |
+| **+ Governance** | `foundry init --from with-outerloop` |
 | **+ IDE host** | `foundry host integrate cursor` |
 
 ## Four-layer taxonomy
 
 | Layer | Packages | Responsibility |
 |-------|----------|----------------|
-| **L1 Interface** | `interface` | Model providers (mock, anthropic) |
+| **L1 Interface** | `interface` | Model providers (mock, anthropic, openai, grok) |
 | **L2 Composition** | `compose`, `mcp` | Tools, context, catalogue |
 | **L3 Execution** | `runtime` | Turn loop, sandbox, control |
 | **L4 Reliability** | `trace`, `evolve`, `emit` | Traces, recovery, evidence |
@@ -136,10 +137,12 @@ L2 proposal written — Human gate: review before applying to stack.yaml
 | `validate` | Check stack against primitive catalogue |
 | `run` | Execute session, write trace + lock |
 | `host integrate` | Install Cursor / Claude Code integration |
-| `primitives list` | Browse available primitives |
-| `sessions list` | List past sessions |
+| `primitives list` / `show` | Browse available primitives |
+| `sessions list` | List past sessions (from session index) |
+| `trace replay` | Narrative replay of a session |
 | `evolve report` | L1 trace analysis |
 | `evolve proposal` | L2 stack diff (human review) |
+| `completion` | Print bash / zsh / fish completions |
 
 → [CLI reference](docs/cli.md) · [API](docs/api.md) · [composition](docs/composition.md)
 
@@ -160,7 +163,7 @@ jobs:
 | `@cobusgreyling/harness-foundry-core` | Schemas, types, paths |
 | `@cobusgreyling/harness-foundry-compose` | Stack builder, catalogue, lock |
 | `@cobusgreyling/harness-foundry-interface` | Model adapters |
-| `@cobusgreyling/harness-foundry-mcp` | MCP tool dispatch stub |
+| `@cobusgreyling/harness-foundry-mcp` | MCP stdio JSON-RPC client |
 | `@cobusgreyling/harness-foundry-runtime` | Session runner |
 | `@cobusgreyling/harness-foundry-trace` | Trace recorder |
 | `@cobusgreyling/harness-foundry-evolve` | L1/L2 evolution |
@@ -170,7 +173,7 @@ jobs:
 
 ## Status
 
-**v0.4.x** — Real turn loop (model → tools → budget), implementer execution, host adapters, npm publish.
+**v0.5.1** — Catalogue depth (≥ 25 primitives), enforced policy primitives, host-bridge traces, session index.
 
 **Platform plan (six pillars → v1):** catalogue → registry → evolve → fleet → observe → bench.
 

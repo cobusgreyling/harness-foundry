@@ -45,4 +45,15 @@ registerPrimitiveHandler("tools/my-tool", async (ref, ctx) => ({
 ```bash
 foundry primitives list
 foundry primitives show control/tool-call-cap
+foundry primitives show policy/path-allowlist
 ```
+
+## Policy primitives (enforced)
+
+| Id | Effect |
+|----|--------|
+| `sandbox/readonly` | Disables `write_file` and mutating `run_command` |
+| `policy/path-allowlist` | File tools only under listed prefixes |
+| `policy/command-allowlist` | `run_command` only for listed prefixes |
+| `policy/secret-scrub` | Redacts keys/tokens from tool output |
+| `control/network-deny` | Expands blocked network tools |

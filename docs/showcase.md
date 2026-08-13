@@ -172,14 +172,14 @@ foundry evolve proposal --session <id>   # L2: propose stack diff
 
 ---
 
-## Primitive catalogue (v0.4)
+## Primitive catalogue (v0.5.1)
 
 | Layer | Primitives |
 |-------|------------|
-| **Interface** | `model/mock`, `model/anthropic` |
-| **Composition** | `context/state-file`, `tools/git-worktree-write` |
-| **Execution** | `control/token-budget-100k`, `sandbox/worktree-isolated` |
-| **Reliability** | `observability/span-per-turn`, `emit/outerloop-evidence`, `recovery/revert-on-test-fail`, `recovery/narrow-scope` |
+| **Interface** | `model/mock`, `model/anthropic`, `model/openai`, `model/openai-compatible`, `model/grok` |
+| **Composition** | `context/state-file`, `context/agents-md`, `context/skills-dir`, `tools/git-worktree-write`, `tools/mcp-stdio`, `tools/search-grep`, `memory/file-log` |
+| **Execution** | `control/token-budget-*`, `control/tool-call-cap`, `sandbox/worktree-isolated`, `sandbox/readonly`, `policy/*`, `control/network-deny` |
+| **Reliability** | `observability/span-per-turn`, `observability/tool-timeline`, `emit/outerloop-evidence`, `recovery/*` |
 
 Browse all: `foundry primitives list` · [Propose a new primitive](https://github.com/cobusgreyling/harness-foundry/issues/new?template=primitive_request.yml)
 

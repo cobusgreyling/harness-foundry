@@ -27,7 +27,7 @@ export async function loadPrimitiveCatalogFromRoot(
   catalogRoot: string,
 ): Promise<Map<string, PrimitiveDefinition>> {
   const catalog = new Map<string, PrimitiveDefinition>();
-  const layerDirs = ["context", "tools", "control", "observability", "interface", "recovery"];
+  const layerDirs = await listCatalogLayerDirs(catalogRoot);
 
   for (const layerDir of layerDirs) {
     const dir = path.join(catalogRoot, layerDir);
@@ -48,6 +48,18 @@ export async function loadPrimitiveCatalogFromRoot(
   }
 
   return catalog;
+}
+
+async function listCatalogLayerDirs(catalogRoot: string): Promise<string[]> {
+  try {
+    const entries = await fs.readdir(catalogRoot, { withFileTypes: true });
+    return entries
+      .filter((entry) => entry.isDirectory() && entry.name !== "node_modules")
+      .map((entry) => entry.name)
+      .sort();
+  } catch {
+    return ["context", "tools", "control", "observability", "interface", "recovery"];
+  }
 }
 
 export async function loadMergedCatalog(

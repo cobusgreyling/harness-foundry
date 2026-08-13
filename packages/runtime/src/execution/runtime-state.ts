@@ -1,4 +1,12 @@
 import type { McpClient } from "@cobusgreyling/harness-foundry-mcp";
+import { defaultSessionPolicy, type SessionPolicy } from "./policy.js";
+
+export type ToolTimelineEntry = {
+  name: string;
+  ok: boolean;
+  at: string;
+  outputChars: number;
+};
 
 export type SessionRuntime = {
   worktreePath?: string;
@@ -8,6 +16,7 @@ export type SessionRuntime = {
   recoveryArmed: Set<string>;
   narrowedScope: boolean;
   host?: "cursor" | "claude-code" | "standalone";
+  hostSignals?: string[];
   /** Tokens consumed this session (input+output from model). */
   tokensUsed: number;
   /** Hard cap from control/token-budget-* (default 100k). */
@@ -25,6 +34,17 @@ export type SessionRuntime = {
   mcpClient?: McpClient;
   /** Tool names exposed by the connected MCP server. */
   mcpToolNames?: Set<string>;
+  /** Execution policy from policy/* and sandbox/readonly primitives. */
+  policy: SessionPolicy;
+  /** Extra builtin tools enabled by composition primitives. */
+  extraTools: Set<string>;
+  /** Injected skill markdown from context/skills-dir. */
+  skillsContext?: string;
+  /** Append-only memory log (memory/file-log). */
+  memoryLogPath?: string;
+  /** Record per-tool timeline for observability/tool-timeline. */
+  recordToolTimeline: boolean;
+  toolTimeline: ToolTimelineEntry[];
 };
 
 export function createSessionRuntime(host?: SessionRuntime["host"]): SessionRuntime {
@@ -37,5 +57,9 @@ export function createSessionRuntime(host?: SessionRuntime["host"]): SessionRunt
     toolCallsUsed: 0,
     maxToolCalls: 50,
     writeEnabled: false,
+    policy: defaultSessionPolicy(),
+    extraTools: new Set(),
+    recordToolTimeline: false,
+    toolTimeline: [],
   };
 }
