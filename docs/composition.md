@@ -39,8 +39,13 @@ Each `foundry run` refreshes `.foundry/stack.lock` with primitive digests for re
 
 | Preset | Use case |
 |--------|----------|
-| `minimal` | Smoke tests, read-only exploration |
+| `minimal` | Smoke tests, first exploration |
 | `implementer` | Write + recovery + evidence |
+| `reviewer` | Read-only review + search_grep |
+| `triage` | Lightweight classification |
+| `ci-sweeper` | Readonly + path/command allowlists |
+| `mcp-worker` | MCP stdio tool loop |
+| `with-outerloop` | Implementer + evidence hook enabled |
 
 ```bash
 foundry init --from implementer

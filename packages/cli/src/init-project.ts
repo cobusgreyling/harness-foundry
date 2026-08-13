@@ -86,7 +86,7 @@ export async function initProject(cwd: string, options: InitOptions = {}): Promi
   await fs.writeFile(
     hookFile,
     YAML.stringify({
-      enabled: false,
+      enabled: preset === "with-outerloop",
       adapter: "outerloop",
       emitOn: ["session.end"],
     }),

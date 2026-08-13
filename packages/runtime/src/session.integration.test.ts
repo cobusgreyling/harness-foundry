@@ -58,6 +58,12 @@ describe("session integration", () => {
       await fs.readFile(path.join(dir, ".foundry", "stack.lock"), "utf8"),
     );
     expect(lock.entries.length).toBeGreaterThan(0);
+
+    expect(events.some((e) => e.type === "host.bridge")).toBe(true);
+    const index = JSON.parse(
+      await fs.readFile(path.join(dir, ".foundry", "sessions", "index.json"), "utf8"),
+    ) as { sessions: Array<{ id: string }> };
+    expect(index.sessions[0]?.id).toBe(result.manifest.id);
   });
 
   it("tool loop writes files for implement goals", async () => {

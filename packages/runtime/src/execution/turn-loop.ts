@@ -1,3 +1,4 @@
+import fs from "node:fs/promises";
 import {
   getModelProvider,
   type ModelMessage,
@@ -34,15 +35,28 @@ export type TurnLoopResult = {
 
 function buildSystemPrompt(ctx: TurnLoopContext): string {
   const cwd = ctx.runtime.worktreePath ?? ctx.projectRoot;
-  const write = ctx.runtime.writeEnabled ? "enabled" : "disabled";
-  return [
+  const write = ctx.runtime.writeEnabled && !ctx.runtime.policy.readonly ? "enabled" : "disabled";
+  const lines = [
     "You are a harness-foundry session agent.",
     `Goal: ${ctx.goal}`,
     `Workspace: ${cwd}`,
     `Write tools: ${write}`,
     "Use tools when needed. Prefer small, verifiable changes.",
     "When finished, respond with a concise summary and no further tool calls.",
-  ].join("\n");
+  ];
+  if (ctx.runtime.policy.readonly) {
+    lines.push("Workspace is read-only. Do not attempt writes or mutating commands.");
+  }
+  if (ctx.runtime.policy.pathAllowlist.length > 0) {
+    lines.push(`Path allowlist: ${ctx.runtime.policy.pathAllowlist.join(", ")}`);
+  }
+  if (ctx.runtime.policy.commandAllowlist.length > 0) {
+    lines.push(`Command allowlist: ${ctx.runtime.policy.commandAllowlist.join(", ")}`);
+  }
+  if (ctx.runtime.skillsContext) {
+    lines.push("Skills:", ctx.runtime.skillsContext);
+  }
+  return lines.join("\n");
 }
 
 function resolveProvider(ref: PrimitiveRef): ModelProvider {
@@ -54,7 +68,10 @@ function resolveProvider(ref: PrimitiveRef): ModelProvider {
 }
 
 async function resolveTools(ctx: TurnLoopContext): Promise<ToolDefinition[]> {
-  const builtin = listBuiltinTools({ writeEnabled: ctx.runtime.writeEnabled });
+  const builtin = listBuiltinTools({
+    writeEnabled: ctx.runtime.writeEnabled && !ctx.runtime.policy.readonly,
+    extra: ctx.runtime.extraTools,
+  });
   if (!ctx.runtime.mcpClient) return builtin;
 
   try {
@@ -251,6 +268,26 @@ export async function runTurnLoop(ctx: TurnLoopContext): Promise<TurnLoopResult>
       });
       applyToolCalls(ctx.runtime, 1);
 
+      if (ctx.runtime.recordToolTimeline) {
+        ctx.runtime.toolTimeline.push({
+          name: call.name,
+          ok: result.ok,
+          at: new Date().toISOString(),
+          outputChars: result.output.length,
+        });
+      }
+
+      const denied = !result.ok && /allowlist|readonly|network-deny|sandbox policy/i.test(result.output);
+      if (denied) {
+        await ctx.recorder.record({
+          sessionId: ctx.sessionId,
+          type: "policy.denied",
+          layer: "execution",
+          detail: result.output.slice(0, 400),
+          metadata: { toolCallId: call.id, name: call.name },
+        });
+      }
+
       await ctx.recorder.record({
         sessionId: ctx.sessionId,
         type: "tool.result",
@@ -263,6 +300,16 @@ export async function runTurnLoop(ctx: TurnLoopContext): Promise<TurnLoopResult>
           toolCallsUsed: ctx.runtime.toolCallsUsed,
         },
       });
+
+      if (ctx.runtime.memoryLogPath) {
+        await appendMemory(ctx.runtime.memoryLogPath, {
+          sessionId: ctx.sessionId,
+          type: "tool",
+          name: call.name,
+          ok: result.ok,
+          at: new Date().toISOString(),
+        });
+      }
 
       messages.push({
         role: "tool",
@@ -285,4 +332,12 @@ export async function runTurnLoop(ctx: TurnLoopContext): Promise<TurnLoopResult>
     finalContent,
     stoppedReason: "max_turns",
   };
+}
+
+async function appendMemory(filePath: string, entry: Record<string, unknown>): Promise<void> {
+  try {
+    await fs.appendFile(filePath, `${JSON.stringify(entry)}\n`, "utf8");
+  } catch {
+    // memory log is best-effort
+  }
 }

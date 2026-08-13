@@ -1,0 +1,5 @@
+id: control/network-deny
+layer: execution
+description: Block network-oriented shell tools (curl, wget, ssh, scp, nmap, …)
+defaults:
+  deny: true

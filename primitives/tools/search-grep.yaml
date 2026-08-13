@@ -1,0 +1,4 @@
+id: tools/search-grep
+layer: composition
+description: Built-in workspace search_grep tool (regex, path-allowlist aware)
+defaults: {}

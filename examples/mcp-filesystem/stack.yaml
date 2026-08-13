@@ -1,0 +1,27 @@
+name: mcp-filesystem
+version: 1.0.0
+description: Example stack wiring a real MCP filesystem server
+layers:
+  interface:
+    - primitive: model/mock
+  composition:
+    - primitive: context/state-file
+    - primitive: tools/mcp-stdio
+      config:
+        serverCommand: npx
+        serverArgs:
+          - -y
+          - @modelcontextprotocol/server-filesystem
+          - .
+    - primitive: tools/search-grep
+  execution:
+    - primitive: sandbox/readonly
+    - primitive: policy/secret-scrub
+    - primitive: control/token-budget-50k
+    - primitive: control/tool-call-cap
+      config:
+        maxToolCalls: 20
+  reliability:
+    - primitive: observability/span-per-turn
+    - primitive: observability/tool-timeline
+    - primitive: emit/outerloop-evidence

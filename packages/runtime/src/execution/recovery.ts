@@ -63,6 +63,8 @@ export async function triggerRecovery(
     detail = await applyRecoveryOnTestFail(ctx);
   } else if (primitive === "recovery/narrow-scope") {
     detail = await applyNarrowScope(ctx);
+  } else if (primitive === "recovery/retry-once") {
+    detail = "Retrying verification once";
   } else {
     detail = `Unknown recovery primitive: ${primitive}`;
     return { ok: false, detail };

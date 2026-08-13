@@ -1,0 +1,4 @@
+id: recovery/retry-once
+layer: reliability
+description: Retry verification once after the first failure before other recovery
+defaults: {}

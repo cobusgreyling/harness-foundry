@@ -29,6 +29,9 @@ Each event:
 | `verification.run` / `pass` / `fail` | Post-session test gate |
 | `recovery.triggered` | Recovery primitive fired |
 | `evidence.emitted` | outerloop EvidencePackage written |
+| `host.bridge` | Host adapter resolved (cursor / claude-code / standalone) |
+| `host.turn` | Ingested host-side turn (`.foundry/host/turns.jsonl` or `FOUNDRY_HOST_TRANSCRIPT`) |
+| `policy.denied` | File/command blocked by a policy primitive |
 | `error` | Failures |
 
 ## Versioning

@@ -1,0 +1,5 @@
+id: sandbox/readonly
+layer: execution
+description: Disable write_file and mutating shell commands
+defaults:
+  readonly: true

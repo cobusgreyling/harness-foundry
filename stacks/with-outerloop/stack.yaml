@@ -1,0 +1,24 @@
+name: with-outerloop
+version: 1.0.0
+description: Implementer loop with outerloop evidence emission enabled
+layers:
+  interface:
+    - primitive: model/mock
+  composition:
+    - primitive: context/state-file
+    - primitive: context/agents-md
+    - primitive: memory/file-log
+    - primitive: tools/git-worktree-write
+  execution:
+    - primitive: sandbox/worktree-isolated
+    - primitive: control/token-budget-100k
+    - primitive: control/tool-call-cap
+      config:
+        maxToolCalls: 40
+    - primitive: policy/secret-scrub
+  reliability:
+    - primitive: observability/span-per-turn
+    - primitive: observability/tool-timeline
+    - primitive: recovery/retry-once
+    - primitive: recovery/revert-on-test-fail
+    - primitive: emit/outerloop-evidence

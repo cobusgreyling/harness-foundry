@@ -66,19 +66,19 @@ loop-engineering  →  harness-foundry  →  outerloop
 - [x] reviewer/triage stacks, runnable examples, Windows QUICKSTART
 - [x] Expanded foundry-gate + demo:examples
 
-## v0.5.x — Catalogue + composition (remaining)
-
+## v0.5.x — Catalogue + composition
 
 **Pillars:** 4 (composition), foundation for 1 (registry).
 
-- [ ] ≥ 25 primitives across four layers (models, MCP, budgets, policy, recovery)
-- [ ] Stacks: `reviewer`, `triage`, `ci-sweeper`, `mcp-worker`, promote `with-outerloop`
-- [ ] `docs/primitive-spec.md` + `foundry primitives show <id>`
-- [ ] Policy primitives enforced in tools / `run_command`
-- [ ] Host bridge records host turns into Foundry traces
-- [ ] Example: real MCP filesystem server end-to-end
+- [x] ≥ 25 primitives across four layers (models, MCP, budgets, policy, recovery)
+- [x] Stacks: `reviewer`, `triage`, `ci-sweeper`, `mcp-worker`, promote `with-outerloop`
+- [x] `docs/primitive-spec.md` + `foundry primitives show <id>`
+- [x] Policy primitives enforced in tools / `run_command`
+- [x] Host bridge records host turns into Foundry traces
+- [x] Example: real MCP filesystem server end-to-end (`examples/mcp-filesystem`)
+- [x] Session index (`.foundry/sessions/index.json`) — prep for v0.7
 
-**Ship:** npm `0.5.0`, showcase “compose a harness like a lockfile.”
+**Ship:** npm `0.5.1`, showcase “compose a harness like a lockfile.”
 
 ---
 

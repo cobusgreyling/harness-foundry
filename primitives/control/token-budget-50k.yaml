@@ -1,0 +1,5 @@
+id: control/token-budget-50k
+layer: execution
+description: Session token budget of 50,000 (input + output)
+defaults:
+  maxTokens: 50000

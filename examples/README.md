@@ -6,6 +6,7 @@
 |---------|-------------|
 | [**with-outerloop**](./with-outerloop/) | **Flagship** — full stack: harness → evidence → verdict |
 | [hello-harness](./hello-harness/) | Minimal init + run walkthrough |
+| [mcp-filesystem](./mcp-filesystem/) | Real MCP stdio filesystem server |
 | [trace-evolution](./trace-evolution/) | L1 report → L2 proposal flow |
 
 ## Quick start

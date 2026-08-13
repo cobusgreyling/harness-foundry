@@ -234,3 +234,29 @@ export const openaiCompatibleProvider: ModelProvider = {
     });
   },
 };
+
+const GROK_BASE_URL = "https://api.x.ai/v1";
+const GROK_DEFAULT_MODEL = "grok-4";
+
+/**
+ * xAI Grok via the OpenAI-compatible Chat Completions API (`XAI_API_KEY` or `GROK_API_KEY`).
+ * Config: `model` (default grok-4), `baseUrl`, `apiKey`.
+ */
+export const grokProvider: ModelProvider = {
+  id: "model/grok",
+  async complete(request: ModelCompletionRequest): Promise<ModelCompletionResult> {
+    const model = (request.config?.model as string | undefined) ?? GROK_DEFAULT_MODEL;
+    return completeOpenAiCompatible(
+      { ...request, config: { ...request.config, model } },
+      {
+        providerId: "model/grok",
+        defaultBaseUrl:
+          (request.config?.baseUrl as string | undefined) ??
+          (request.config?.baseURL as string | undefined) ??
+          process.env.XAI_BASE_URL ??
+          GROK_BASE_URL,
+        envKeyNames: ["XAI_API_KEY", "GROK_API_KEY"],
+      },
+    );
+  },
+};

@@ -1,0 +1,5 @@
+id: policy/path-allowlist
+layer: execution
+description: Restrict file tools to relative path prefixes
+defaults:
+  paths: []

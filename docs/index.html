@@ -439,7 +439,7 @@ foundry evolve proposal --session &lt;id&gt;   # L2
 
   <section id="primitives">
     <div class="wrap">
-      <p class="section-label">Catalogue · v0.4</p>
+      <p class="section-label">Catalogue · v0.5</p>
       <h2>Primitive layers</h2>
       <p class="sub">Versioned, declarative, swappable. Browse with <code>foundry primitives list</code>.</p>
       <div class="table-wrap">
@@ -448,10 +448,10 @@ foundry evolve proposal --session &lt;id&gt;   # L2
             <tr><th>Layer</th><th>Primitives</th></tr>
           </thead>
           <tbody>
-            <tr><td><strong>Interface</strong></td><td><code>model/mock</code>, <code>model/anthropic</code></td></tr>
-            <tr><td><strong>Composition</strong></td><td><code>context/state-file</code>, <code>tools/git-worktree-write</code></td></tr>
-            <tr><td><strong>Execution</strong></td><td><code>control/token-budget-100k</code>, <code>sandbox/worktree-isolated</code></td></tr>
-            <tr><td><strong>Reliability</strong></td><td><code>observability/span-per-turn</code>, <code>emit/outerloop-evidence</code>, <code>recovery/revert-on-test-fail</code>, <code>recovery/narrow-scope</code></td></tr>
+            <tr><td><strong>Interface</strong></td><td><code>model/mock</code>, <code>model/anthropic</code>, <code>model/openai</code>, <code>model/grok</code></td></tr>
+            <tr><td><strong>Composition</strong></td><td><code>context/*</code>, <code>tools/mcp-stdio</code>, <code>tools/search-grep</code>, <code>memory/file-log</code></td></tr>
+            <tr><td><strong>Execution</strong></td><td><code>control/*</code>, <code>sandbox/*</code>, <code>policy/*</code></td></tr>
+            <tr><td><strong>Reliability</strong></td><td><code>observability/*</code>, <code>emit/outerloop-evidence</code>, <code>recovery/*</code></td></tr>
           </tbody>
         </table>
       </div>
@@ -511,7 +511,7 @@ foundry evolve proposal --session &lt;id&gt;   # L2
   <footer>
     <div class="wrap">
       <strong>Own the runtime. Trace the runs. Govern the outcomes.</strong>
-      <p>v0.4.0 · MIT · Built with loop-engineering · companion to outerloop</p>
+      <p>v0.5.x · MIT · Built with loop-engineering · companion to outerloop</p>
       <div class="links">
         <a href="https://github.com/cobusgreyling/harness-foundry">GitHub</a>
         <a href="https://www.npmjs.com/package/@cobusgreyling/harness-foundry">npm</a>

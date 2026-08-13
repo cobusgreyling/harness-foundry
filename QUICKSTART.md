@@ -21,6 +21,17 @@ foundry evolve report --session <id>
 foundry evolve proposal --session <id>
 ```
 
+## Other presets
+
+```bash
+foundry init --from reviewer
+foundry init --from ci-sweeper
+foundry init --from mcp-worker
+foundry init --from with-outerloop   # enables .foundry/hooks/outerloop.yaml
+```
+
+`ci-sweeper` is read-only with path + command allowlists. `with-outerloop` turns evidence emission on.
+
 ## Implementer preset
 
 For read-write agent loops with git worktrees, test verification, and recovery:

@@ -1,9 +1,11 @@
 import { execFile } from "node:child_process";
+import type { Dirent } from "node:fs";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { promisify } from "node:util";
 import type { ToolCall, ToolDefinition } from "@cobusgreyling/harness-foundry-interface";
 import type { McpClient } from "@cobusgreyling/harness-foundry-mcp";
+import { commandAllowed, maybeScrub, pathAllowed } from "./policy.js";
 import type { SessionRuntime } from "./runtime-state.js";
 
 const execFileAsync = promisify(execFile);
@@ -65,11 +67,32 @@ const BUILTIN_TOOLS: ToolDefinition[] = [
   },
 ];
 
-export function listBuiltinTools(options?: { writeEnabled?: boolean }): ToolDefinition[] {
+const SEARCH_GREP_TOOL: ToolDefinition = {
+  name: "search_grep",
+  description: "Search workspace files for a regex/string and return matching lines",
+  parameters: {
+    type: "object",
+    properties: {
+      query: { type: "string", description: "Regex or literal substring to search for" },
+      path: { type: "string", description: "Relative directory or file to search (default .)" },
+    },
+    required: ["query"],
+  },
+};
+
+export function listBuiltinTools(options?: {
+  writeEnabled?: boolean;
+  extra?: Iterable<string>;
+}): ToolDefinition[] {
+  let tools = [...BUILTIN_TOOLS];
   if (options?.writeEnabled === false) {
-    return BUILTIN_TOOLS.filter((t) => t.name !== "write_file");
+    tools = tools.filter((t) => t.name !== "write_file");
   }
-  return [...BUILTIN_TOOLS];
+  const extra = new Set(options?.extra ?? []);
+  if (extra.has("search_grep") && !tools.some((t) => t.name === "search_grep")) {
+    tools.push(SEARCH_GREP_TOOL);
+  }
+  return tools;
 }
 
 /** Merge built-in tools with MCP tools (MCP names are prefixed `mcp__` when they collide). */
@@ -122,6 +145,17 @@ function resolveSafePath(root: string, relative: string): string {
   return resolved;
 }
 
+function assertPathPolicy(ctx: ToolExecutionContext, relative: string): void {
+  const rel = relative === "" ? "." : relative;
+  if (!pathAllowed(ctx.runtime.policy, rel)) {
+    throw new Error(`Path not in allowlist: ${rel}`);
+  }
+}
+
+function finish(ctx: ToolExecutionContext, result: ToolExecutionResult): ToolExecutionResult {
+  return { ...result, output: maybeScrub(ctx.runtime.policy, result.output) };
+}
+
 async function readFileTool(
   ctx: ToolExecutionContext,
   args: Record<string, unknown>,
@@ -129,6 +163,7 @@ async function readFileTool(
   const rel = String(args.path ?? "");
   if (!rel) return { ok: false, output: "read_file requires path" };
   try {
+    assertPathPolicy(ctx, rel);
     const full = resolveSafePath(workspaceRoot(ctx), rel);
     const content = await fs.readFile(full, "utf8");
     const sliced = content.length > 32_000 ? `${content.slice(0, 32_000)}\n…[truncated]` : content;
@@ -148,7 +183,11 @@ async function writeFileTool(
   const rel = String(args.path ?? "");
   const content = String(args.content ?? "");
   if (!rel) return { ok: false, output: "write_file requires path" };
+  if (ctx.runtime.policy.readonly) {
+    return { ok: false, output: "write_file disabled (sandbox/readonly)" };
+  }
   try {
+    assertPathPolicy(ctx, rel);
     const full = resolveSafePath(workspaceRoot(ctx), rel);
     await fs.mkdir(path.dirname(full), { recursive: true });
     await fs.writeFile(full, content, "utf8");
@@ -164,6 +203,7 @@ async function listDirTool(
 ): Promise<ToolExecutionResult> {
   const rel = String(args.path ?? ".");
   try {
+    assertPathPolicy(ctx, rel === "" ? "." : rel);
     const full = resolveSafePath(workspaceRoot(ctx), rel === "" ? "." : rel);
     const entries = await fs.readdir(full, { withFileTypes: true });
     const lines = entries
@@ -183,8 +223,9 @@ async function runCommandTool(
   const command = String(args.command ?? "").trim();
   if (!command) return { ok: false, output: "run_command requires command" };
 
-  if (/\brm\s+-rf\s+\/\b|curl\s+|wget\s+|nc\s+|ssh\s+/i.test(command)) {
-    return { ok: false, output: "Command blocked by sandbox policy" };
+  const allowed = commandAllowed(ctx.runtime.policy, command);
+  if (!allowed.ok) {
+    return { ok: false, output: allowed.reason ?? "Command blocked by sandbox policy" };
   }
 
   const cwd = workspaceRoot(ctx);
@@ -208,6 +249,84 @@ async function runCommandTool(
   }
 }
 
+const SKIP_DIRS = new Set(["node_modules", ".git", "dist", "coverage", ".foundry"]);
+const SKIP_FILE = /\.(png|jpe?g|gif|webp|ico|woff2?|ttf|eot|zip|gz|br|wasm|mp4|mp3|bin)$/i;
+
+async function searchGrepTool(
+  ctx: ToolExecutionContext,
+  args: Record<string, unknown>,
+): Promise<ToolExecutionResult> {
+  const query = String(args.query ?? args.pattern ?? "");
+  const rel = String(args.path ?? ".");
+  if (!query) return { ok: false, output: "search_grep requires query" };
+
+  let regex: RegExp;
+  try {
+    regex = new RegExp(query, "i");
+  } catch {
+    regex = new RegExp(query.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i");
+  }
+
+  const matches: string[] = [];
+  const root = workspaceRoot(ctx);
+
+  async function walk(dir: string, depth: number): Promise<void> {
+    if (matches.length >= 50 || depth > 8) return;
+    let entries: Dirent[];
+    try {
+      entries = await fs.readdir(dir, { withFileTypes: true });
+    } catch {
+      return;
+    }
+    for (const entry of entries) {
+      if (matches.length >= 50) return;
+      if (SKIP_DIRS.has(entry.name)) continue;
+      const full = path.join(dir, entry.name);
+      const relPath = path.relative(root, full);
+      if (!pathAllowed(ctx.runtime.policy, relPath)) continue;
+      if (entry.isDirectory()) {
+        await walk(full, depth + 1);
+        continue;
+      }
+      if (!entry.isFile() || SKIP_FILE.test(entry.name)) continue;
+      try {
+        const content = await fs.readFile(full, "utf8");
+        const lines = content.split("\n");
+        for (let i = 0; i < lines.length; i += 1) {
+          if (regex.test(lines[i] ?? "")) {
+            matches.push(`${relPath}:${i + 1}:${(lines[i] ?? "").slice(0, 200)}`);
+            if (matches.length >= 50) return;
+          }
+        }
+      } catch {
+        // skip unreadable / binary
+      }
+    }
+  }
+
+  try {
+    assertPathPolicy(ctx, rel === "" ? "." : rel);
+    const start = resolveSafePath(root, rel === "" ? "." : rel);
+    const stat = await fs.stat(start);
+    if (stat.isFile()) {
+      const content = await fs.readFile(start, "utf8");
+      const lines = content.split("\n");
+      const relPath = path.relative(root, start);
+      for (let i = 0; i < lines.length; i += 1) {
+        if (regex.test(lines[i] ?? "")) {
+          matches.push(`${relPath}:${i + 1}:${(lines[i] ?? "").slice(0, 200)}`);
+          if (matches.length >= 50) break;
+        }
+      }
+    } else {
+      await walk(start, 0);
+    }
+    return { ok: true, output: matches.join("\n") || "(no matches)" };
+  } catch (error) {
+    return { ok: false, output: error instanceof Error ? error.message : String(error) };
+  }
+}
+
 export async function executeToolCall(
   call: ToolCall,
   ctx: ToolExecutionContext,
@@ -220,26 +339,35 @@ export async function executeToolCall(
     if (mcpNames.has(name) || call.name.startsWith("mcp__")) {
       try {
         const output = await ctx.runtime.mcpClient.callTool(name, call.arguments ?? {});
-        return { ok: true, output };
+        return finish(ctx, { ok: true, output });
       } catch (error) {
-        return {
+        return finish(ctx, {
           ok: false,
           output: error instanceof Error ? error.message : String(error),
-        };
+        });
       }
     }
   }
 
+  let result: ToolExecutionResult;
   switch (call.name) {
     case "read_file":
-      return readFileTool(ctx, call.arguments);
+      result = await readFileTool(ctx, call.arguments);
+      break;
     case "write_file":
-      return writeFileTool(ctx, call.arguments);
+      result = await writeFileTool(ctx, call.arguments);
+      break;
     case "list_dir":
-      return listDirTool(ctx, call.arguments);
+      result = await listDirTool(ctx, call.arguments);
+      break;
     case "run_command":
-      return runCommandTool(ctx, call.arguments);
+      result = await runCommandTool(ctx, call.arguments);
+      break;
+    case "search_grep":
+      result = await searchGrepTool(ctx, call.arguments);
+      break;
     default:
-      return { ok: false, output: `Unknown tool: ${call.name}` };
+      result = { ok: false, output: `Unknown tool: ${call.name}` };
   }
+  return finish(ctx, result);
 }

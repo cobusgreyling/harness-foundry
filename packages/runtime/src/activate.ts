@@ -1,3 +1,4 @@
+import type { Dirent } from "node:fs";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { getModelProvider } from "@cobusgreyling/harness-foundry-interface";
@@ -11,6 +12,7 @@ import {
   isGitRepo,
   verifyWorktreeIsolation,
 } from "./execution/worktree.js";
+import { parseStringList } from "./execution/policy.js";
 import { tryPrimitiveHandler } from "./plugins.js";
 
 export type ActivateContext = {
@@ -23,9 +25,17 @@ export type ActivateContext = {
 
 function layerForPrimitive(id: string): LayerName {
   if (id.startsWith("model/")) return "interface";
-  if (id.startsWith("context/") || id.startsWith("tools/") || id.startsWith("skills/"))
+  if (
+    id.startsWith("context/") ||
+    id.startsWith("tools/") ||
+    id.startsWith("skills/") ||
+    id.startsWith("memory/")
+  ) {
     return "composition";
-  if (id.startsWith("control/") || id.startsWith("sandbox/")) return "execution";
+  }
+  if (id.startsWith("control/") || id.startsWith("sandbox/") || id.startsWith("policy/")) {
+    return "execution";
+  }
   return "reliability";
 }
 
@@ -80,6 +90,24 @@ export async function activatePrimitive(
       } catch {
         detail = "No AGENTS.md — skipped";
       }
+    } else if (ref.primitive === "context/skills-dir") {
+      const configured = (ref.config?.dir as string | undefined) ?? "skills";
+      const primary = path.isAbsolute(configured)
+        ? configured
+        : path.join(ctx.projectRoot, configured);
+      const fallback = path.join(ctx.projectRoot, ".foundry", "skills");
+      const skillsRoot = (await exists(primary)) ? primary : fallback;
+      const loaded = await loadSkillsContext(skillsRoot);
+      ctx.runtime.skillsContext = loaded.text || undefined;
+      detail = loaded.files
+        ? `Loaded ${loaded.files} skill file(s) from ${skillsRoot}`
+        : `No skills found in ${primary} or ${fallback}`;
+    } else if (ref.primitive === "memory/file-log") {
+      const rel = (ref.config?.path as string | undefined) ?? path.join(".foundry", "state", "memory.jsonl");
+      const memPath = path.isAbsolute(rel) ? rel : path.join(ctx.projectRoot, rel);
+      await fs.mkdir(path.dirname(memPath), { recursive: true });
+      ctx.runtime.memoryLogPath = memPath;
+      detail = `Memory log ${memPath}`;
     } else if (ref.primitive === "tools/git-worktree-write") {
       ctx.runtime.writeEnabled = true;
       if (!(await isGitRepo(ctx.projectRoot))) {
@@ -122,6 +150,34 @@ export async function activatePrimitive(
         ctx.runtime.mcpToolNames = new Set(tools.map((t) => t.name));
         detail = `MCP stub mode (${tools.length} default tools) — set config.serverCommand for real stdio`;
       }
+    } else if (ref.primitive === "tools/search-grep") {
+      ctx.runtime.extraTools.add("search_grep");
+      detail = "search_grep tool enabled";
+    } else if (ref.primitive === "sandbox/readonly") {
+      ctx.runtime.policy.readonly = true;
+      ctx.runtime.writeEnabled = false;
+      detail = "Readonly sandbox — writes and mutating commands blocked";
+    } else if (ref.primitive === "policy/path-allowlist") {
+      const paths = parseStringList(ref.config?.paths ?? ref.config?.allow);
+      ctx.runtime.policy.pathAllowlist = paths;
+      detail = paths.length
+        ? `Path allowlist: ${paths.join(", ")}`
+        : "Path allowlist empty (all workspace paths allowed)";
+    } else if (ref.primitive === "policy/command-allowlist") {
+      const commands = parseStringList(ref.config?.commands ?? ref.config?.allow);
+      ctx.runtime.policy.commandAllowlist = commands;
+      detail = commands.length
+        ? `Command allowlist: ${commands.join(", ")}`
+        : "Command allowlist empty (default deny-list only)";
+    } else if (ref.primitive === "policy/secret-scrub") {
+      ctx.runtime.policy.secretScrub = true;
+      detail = "Secret scrub enabled on tool output";
+    } else if (
+      ref.primitive === "control/network-deny" ||
+      ref.primitive === "policy/network-deny"
+    ) {
+      ctx.runtime.policy.networkDenied = true;
+      detail = "Network commands denied";
     } else if (ref.primitive === "sandbox/worktree-isolated") {
       if (ctx.runtime.worktreePath) {
         const isolation = await verifyWorktreeIsolation(ctx.projectRoot, ctx.runtime.worktreePath);
@@ -145,11 +201,19 @@ export async function activatePrimitive(
     } else if (ref.primitive === "recovery/narrow-scope") {
       ctx.runtime.recoveryArmed.add(ref.primitive);
       detail = "Recovery armed (narrow scope on failure)";
+    } else if (ref.primitive === "recovery/retry-once") {
+      ctx.runtime.recoveryArmed.add(ref.primitive);
+      detail = "Recovery armed (retry verification once)";
+    } else if (ref.primitive === "observability/tool-timeline") {
+      ctx.runtime.recordToolTimeline = true;
+      detail = "Tool timeline recording enabled";
     } else if (
+      ref.primitive === "control/token-budget-50k" ||
       ref.primitive === "control/token-budget-100k" ||
       ref.primitive.startsWith("control/token-budget")
     ) {
-      ctx.runtime.maxTokens = numConfig(ref, "maxTokens", 100_000);
+      const tokenFallback = ref.primitive.includes("50k") ? 50_000 : 100_000;
+      ctx.runtime.maxTokens = numConfig(ref, "maxTokens", tokenFallback);
       ctx.runtime.maxToolCalls = numConfig(ref, "maxToolCalls", ctx.runtime.maxToolCalls);
       detail = `Token budget ${ctx.runtime.maxTokens} / tool-call cap ${ctx.runtime.maxToolCalls}`;
     } else if (
@@ -197,4 +261,49 @@ export async function activatePrimitive(
   });
 
   return { ok, detail };
+}
+
+async function exists(target: string): Promise<boolean> {
+  try {
+    await fs.access(target);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+async function loadSkillsContext(root: string): Promise<{ text: string; files: number }> {
+  const chunks: string[] = [];
+  let files = 0;
+  let total = 0;
+
+  async function consider(filePath: string, label: string): Promise<void> {
+    if (files >= 12 || total >= 8000) return;
+    try {
+      const text = await fs.readFile(filePath, "utf8");
+      const slice = text.slice(0, 2000);
+      chunks.push(`## ${label}\n${slice}`);
+      files += 1;
+      total += slice.length;
+    } catch {
+      // skip missing
+    }
+  }
+
+  let entries: Dirent[];
+  try {
+    entries = await fs.readdir(root, { withFileTypes: true });
+  } catch {
+    return { text: "", files: 0 };
+  }
+
+  for (const entry of entries) {
+    if (entry.isFile() && entry.name.endsWith(".md")) {
+      await consider(path.join(root, entry.name), entry.name);
+    } else if (entry.isDirectory()) {
+      await consider(path.join(root, entry.name, "SKILL.md"), `${entry.name}/SKILL.md`);
+    }
+  }
+
+  return { text: chunks.join("\n\n"), files };
 }

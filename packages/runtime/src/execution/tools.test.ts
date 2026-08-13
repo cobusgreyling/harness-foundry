@@ -62,6 +62,60 @@ describe("builtin tools", () => {
     expect(result.output).toMatch(/escapes workspace/i);
   });
 
+  it("search_grep finds lines and honors path allowlist", async () => {
+    const dir = await fs.mkdtemp(path.join(os.tmpdir(), "foundry-tools-"));
+    tmpDirs.push(dir);
+    await fs.mkdir(path.join(dir, "src"), { recursive: true });
+    await fs.writeFile(path.join(dir, "src", "app.ts"), "const secret = 'findme';\n", "utf8");
+    await fs.writeFile(path.join(dir, "other.ts"), "const secret = 'findme';\n", "utf8");
+    const runtime = createSessionRuntime();
+    runtime.extraTools.add("search_grep");
+    runtime.policy.pathAllowlist = ["src"];
+
+    const hit = await executeToolCall(
+      { id: "1", name: "search_grep", arguments: { query: "findme" } },
+      { projectRoot: dir, runtime },
+    );
+    expect(hit.ok).toBe(true);
+    expect(hit.output).toContain("src/app.ts");
+    expect(hit.output).not.toContain("other.ts");
+  });
+
+  it("blocks writes and paths outside the allowlist", async () => {
+    const dir = await fs.mkdtemp(path.join(os.tmpdir(), "foundry-tools-"));
+    tmpDirs.push(dir);
+    const runtime = createSessionRuntime();
+    runtime.writeEnabled = true;
+    runtime.policy.pathAllowlist = ["src"];
+
+    const result = await executeToolCall(
+      {
+        id: "1",
+        name: "write_file",
+        arguments: { path: "secrets/x.txt", content: "nope" },
+      },
+      { projectRoot: dir, runtime },
+    );
+    expect(result.ok).toBe(false);
+    expect(result.output).toMatch(/allowlist/i);
+  });
+
+  it("scrubs secrets from tool output", async () => {
+    const dir = await fs.mkdtemp(path.join(os.tmpdir(), "foundry-tools-"));
+    tmpDirs.push(dir);
+    await fs.writeFile(path.join(dir, "note.txt"), "key=sk-abcdefghijklmnopqrstuvwxyz\n", "utf8");
+    const runtime = createSessionRuntime();
+    runtime.policy.secretScrub = true;
+
+    const result = await executeToolCall(
+      { id: "1", name: "read_file", arguments: { path: "note.txt" } },
+      { projectRoot: dir, runtime },
+    );
+    expect(result.ok).toBe(true);
+    expect(result.output).toContain("[redacted]");
+    expect(result.output).not.toContain("sk-abcdefghijklmnopqrstuvwxyz");
+  });
+
   it("denies write when not enabled", async () => {
     const dir = await fs.mkdtemp(path.join(os.tmpdir(), "foundry-tools-"));
     tmpDirs.push(dir);

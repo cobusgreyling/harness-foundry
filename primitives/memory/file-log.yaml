@@ -1,0 +1,5 @@
+id: memory/file-log
+layer: composition
+description: Append session tool and end events to a JSONL memory log
+defaults:
+  path: .foundry/state/memory.jsonl
