@@ -1,5 +1,11 @@
 # @cobusgreyling/harness-foundry-core
 
+## 0.5.1
+
+### Patch Changes
+
+- 12c3cd8: Catalogue depth (≥25 primitives), enforced policy primitives, Grok adapter, host-bridge traces, session index, and CLI UX (replay, completion, --project-root).
+
 ## 0.5.0
 
 ### Minor Changes

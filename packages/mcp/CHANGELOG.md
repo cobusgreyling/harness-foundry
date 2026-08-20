@@ -1,5 +1,12 @@
 # @cobusgreyling/harness-foundry-mcp
 
+## 0.5.1
+
+### Patch Changes
+
+- Updated dependencies [12c3cd8]
+  - @cobusgreyling/harness-foundry-core@0.5.1
+
 ## 0.5.0
 
 ### Minor Changes
